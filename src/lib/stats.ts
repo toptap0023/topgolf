@@ -305,38 +305,48 @@ export function groupByMonth(data: SessionShots[]): SessionShots[] {
 }
 
 /** Short, preliminary "what to adjust" tips for one club — pure logic, no AI. */
-export function clubTips(agg: ClubAgg): string[] {
-  const tips: string[] = [];
+export function clubTips(agg: ClubAgg): { text: string; th: string }[] {
+  const tips: { text: string; th: string }[] = [];
   if (agg.smash.n && agg.smash.mean < agg.smashIdeal - 0.08)
-    tips.push(
-      `Contact is off-centre (smash ${agg.smash.mean.toFixed(2)} vs ideal ~${agg.smashIdeal.toFixed(2)}). Groove a centre strike before chasing distance.`
-    );
+    tips.push({
+      text: `Contact is off-centre (smash ${agg.smash.mean.toFixed(2)} vs ideal ~${agg.smashIdeal.toFixed(2)}). Groove a centre strike before chasing distance.`,
+      th: `โดนไม่กลางหน้าไม้ (smash ${agg.smash.mean.toFixed(2)} เทียบ ideal ~${agg.smashIdeal.toFixed(2)}) — ฝึกตีให้โดนกลางก่อนค่อยเพิ่มระยะ`,
+    });
   if (agg.face.n && agg.face.mean < -3)
-    tips.push(
-      `Face ~${Math.abs(agg.face.mean).toFixed(0)}° closed at impact → aims left. Check grip; feel the toe stay back through impact.`
-    );
+    tips.push({
+      text: `Face ~${Math.abs(agg.face.mean).toFixed(0)}° closed at impact → aims left. Check grip; feel the toe stay back through impact.`,
+      th: `หน้าไม้ปิด ~${Math.abs(agg.face.mean).toFixed(0)}° ตอนปะทะ → เล็งซ้าย เช็คกริปและคุมไม่ให้พลิกหน้าไม้`,
+    });
   else if (agg.face.n && agg.face.mean > 3)
-    tips.push(
-      `Face ~${agg.face.mean.toFixed(0)}° open → aims right. Rotate/release the face more through impact.`
-    );
+    tips.push({
+      text: `Face ~${agg.face.mean.toFixed(0)}° open → aims right. Rotate/release the face more through impact.`,
+      th: `หน้าไม้เปิด ~${agg.face.mean.toFixed(0)}° → เล็งขวา ปล่อย/พลิกหน้าไม้ให้มากขึ้นตอนปะทะ`,
+    });
   if (agg.clubPath.n && agg.clubPath.mean < -2)
-    tips.push(
-      `Path ${Math.abs(agg.clubPath.mean).toFixed(1)}° out-to-in (over the top). Feel more in-to-out and shallow the downswing.`
-    );
+    tips.push({
+      text: `Path ${Math.abs(agg.clubPath.mean).toFixed(1)}° out-to-in (over the top). Feel more in-to-out and shallow the downswing.`,
+      th: `วงเข้า-ออก ${Math.abs(agg.clubPath.mean).toFixed(1)}° (over the top) — ฝึกฟีล in-to-out และ shallow ขาลง`,
+    });
   else if (agg.clubPath.n && agg.clubPath.mean > 4)
-    tips.push(
-      `Path ${agg.clubPath.mean.toFixed(1)}° in-to-out (very pushy). Calm the path toward neutral.`
-    );
+    tips.push({
+      text: `Path ${agg.clubPath.mean.toFixed(1)}° in-to-out (very pushy). Calm the path toward neutral.`,
+      th: `วงออก-เข้า ${agg.clubPath.mean.toFixed(1)}° (in-to-out มากไป) — ปรับ path ให้กลางขึ้น`,
+    });
   if (Number.isFinite(agg.consistency) && agg.consistency > 15)
-    tips.push(
-      `Carry spread is wide (CV ${agg.consistency.toFixed(0)}%). Build a repeatable strike before adding speed.`
-    );
+    tips.push({
+      text: `Carry spread is wide (CV ${agg.consistency.toFixed(0)}%). Build a repeatable strike before adding speed.`,
+      th: `ระยะ carry เหวี่ยงกว้าง (CV ${agg.consistency.toFixed(0)}%) — ทำให้นิ่งก่อนค่อยเพิ่มสปีด`,
+    });
   if (agg.category === "Driver" && agg.launch.n && agg.launch.mean > 17)
-    tips.push(
-      `Driver launch ${agg.launch.mean.toFixed(0)}° is high — likely scooping/skying. Tee lower, ball forward, centre the strike.`
-    );
+    tips.push({
+      text: `Driver launch ${agg.launch.mean.toFixed(0)}° is high — likely scooping/skying. Tee lower, ball forward, centre the strike.`,
+      th: `ไดรเวอร์ launch ${agg.launch.mean.toFixed(0)}° สูงไป — น่าจะงัด/ลอยตั้ง ตั้งทีต่ำลง ลูกไปข้างหน้า เน้นโดนกลาง`,
+    });
   if (tips.length === 0)
-    tips.push("Solid and repeatable — keep grooving this one.");
+    tips.push({
+      text: "Solid and repeatable — keep grooving this one.",
+      th: "ตีได้ดีและสม่ำเสมอ — รักษาความรู้สึกนี้ไว้",
+    });
   return tips.slice(0, 3);
 }
 

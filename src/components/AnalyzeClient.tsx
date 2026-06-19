@@ -1,14 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Shot, DistanceUnit, SpeedUnit } from "@/lib/types";
+import type { Shot, ShotMetric, DistanceUnit, SpeedUnit } from "@/lib/types";
 import type { SessionShots } from "@/lib/stats";
 import {
   aggregateByClub,
   dispersionFor,
   metricTrend,
   consistencyTrend,
-  groupByMonth,
   clubTips,
   slope,
   shotShape,
@@ -23,7 +22,6 @@ import {
   pm,
   pathDir,
   faceDir,
-  formatMonthShort,
   distanceUnitLabel,
   speedUnitLabel,
 } from "@/lib/format";
@@ -56,7 +54,7 @@ export function AnalyzeClient({
   const aggs = useMemo(() => aggregateByClub(allShots), [allShots]);
   const clubs = aggs.map((a) => a.club);
   const [club, setClub] = useState<string>(clubs[0] ?? "");
-  const [byMonth, setByMonth] = useState(false);
+  const [range, setRange] = useState(12); // trend window in months
 
   const agg = aggs.find((a) => a.club === club);
   const clubShots = useMemo(
@@ -69,25 +67,33 @@ export function AnalyzeClient({
   const sp = speedUnitLabel(speedUnit);
   const color = agg ? CATEGORY_COLOR[agg.category] : "#16a34a";
 
+  const cutoff = useMemo(() => {
+    const d0 = new Date();
+    d0.setMonth(d0.getMonth() - range);
+    const tz = d0.getTimezoneOffset() * 60000;
+    return new Date(d0.getTime() - tz).toISOString().slice(0, 10);
+  }, [range]);
   const trendData = useMemo(
-    () => (byMonth ? groupByMonth(sessionShots) : sessionShots),
-    [byMonth, sessionShots]
+    () => sessionShots.filter((s) => s.date >= cutoff),
+    [sessionShots, cutoff]
   );
-  const carryPts = metricTrend(trendData, "carry_distance", club).map((p) => ({
-    date: p.date,
-    value: p.value,
-  }));
+  const pts = (metric: ShotMetric) =>
+    metricTrend(trendData, metric, club).map((p) => ({
+      date: p.date,
+      value: p.value,
+    }));
+  const carryPts = pts("carry_distance");
+  const sidePts = pts("carry_deviation_distance");
   const consPts = consistencyTrend(trendData, club).map((p) => ({
     date: p.date,
     value: p.value,
   }));
   const carrySeries = [{ label: "Carry", color, points: carryPts }];
   const consSeries = [{ label: "Carry σ", color: "#ff9f0a", points: consPts }];
-  const labelFmt = byMonth ? formatMonthShort : undefined;
+  const sideSeries = [{ label: "Side", color: "#0a84ff", points: sidePts }];
 
   const carrySlope = slope(carryPts);
   const consSlope = slope(consPts);
-  const periodWord = byMonth ? "month" : "session";
 
   if (!agg)
     return <p className="text-sm text-ink-muted">No data to analyze.</p>;
@@ -220,42 +226,38 @@ export function AnalyzeClient({
         <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-              Trend by
+              Trend range
             </span>
             <div className="flex rounded-lg border border-line p-0.5">
-              {[
-                { k: false, label: "Session" },
-                { k: true, label: "Month" },
-              ].map((o) => (
+              {[1, 3, 6, 12].map((m) => (
                 <button
-                  key={o.label}
+                  key={m}
                   type="button"
-                  onClick={() => setByMonth(o.k)}
-                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors duration-200 cursor-pointer ${
-                    byMonth === o.k
+                  onClick={() => setRange(m)}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-200 cursor-pointer ${
+                    range === m
                       ? "bg-accent text-bg"
                       : "text-ink-muted hover:text-ink"
                   }`}
                 >
-                  {o.label}
+                  {m}M
                 </button>
               ))}
             </div>
           </div>
           <Card className="p-5">
-            <SectionTitle sub={`Average carry per ${periodWord} (${d})`}>
+            <SectionTitle sub={`Average carry per session · last ${range} mo (${d})`}>
               Carry trend
             </SectionTitle>
             <TrendChart
               series={carrySeries}
               unit={d}
               yLabel="Carry"
-              labelFmt={labelFmt}
-              empty={`Log this club across 2+ ${periodWord}s to see a trend.`}
+              empty="Not enough data in this range."
             />
           </Card>
           <Card className="p-5">
-            <SectionTitle sub={`Shot-to-shot carry spread per ${periodWord}`}>
+            <SectionTitle sub="Shot-to-shot carry spread per session">
               Consistency trend
             </SectionTitle>
             <TrendChart
@@ -263,8 +265,19 @@ export function AnalyzeClient({
               unit={d}
               yLabel="Carry σ"
               lowerBetter
-              labelFmt={labelFmt}
-              empty={`Log this club across 2+ ${periodWord}s to see a trend.`}
+              empty="Not enough data in this range."
+            />
+          </Card>
+          <Card className="p-5">
+            <SectionTitle sub="+ ขวา · − ซ้าย (เทียบเส้น 0) — พลาดทางไหนบ่อยกว่า">
+              Side bias trend
+            </SectionTitle>
+            <TrendChart
+              series={sideSeries}
+              unit={d}
+              yLabel="Side (+R / −L)"
+              target={0}
+              empty="Not enough data in this range."
             />
           </Card>
         </div>
@@ -276,10 +289,10 @@ export function AnalyzeClient({
         </SectionTitle>
         {carryPts.length >= 2 ? (
           <p className="mb-3 text-sm text-ink-muted">
-            Over your last {carryPts.length} {periodWord}s: carry{" "}
+            Last {range} mo · {carryPts.length} sessions: carry{" "}
             <b className="text-ink">
               {carrySlope >= 0 ? "+" : ""}
-              {carrySlope.toFixed(1)} {d}/{periodWord}
+              {carrySlope.toFixed(1)} {d}/session
             </b>
             , dispersion{" "}
             <b className={consSlope <= 0 ? "text-good" : "text-bad"}>
@@ -288,14 +301,17 @@ export function AnalyzeClient({
             .
           </p>
         ) : null}
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-3">
           {tips.map((t, i) => (
-            <li key={i} className="flex gap-2 text-sm text-ink">
+            <li key={i} className="flex gap-2 text-sm">
               <span
                 className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
                 aria-hidden
               />
-              {t}
+              <span>
+                <span className="text-ink">{t.text}</span>
+                <span className="mt-1 block text-ink-muted">{t.th}</span>
+              </span>
             </li>
           ))}
         </ul>
