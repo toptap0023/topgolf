@@ -341,8 +341,10 @@ export function clubTips(agg: ClubAgg): string[] {
 }
 
 /** Bag-wide priorities, ranked. Returns short tip + tone. */
-export function bagTips(aggs: ClubAgg[]): { text: string; tone: Tone }[] {
-  const out: { text: string; tone: Tone }[] = [];
+export function bagTips(
+  aggs: ClubAgg[]
+): { text: string; th: string; tone: Tone }[] {
+  const out: { text: string; th: string; tone: Tone }[] = [];
   const withFace = aggs.filter((a) => a.face.n);
   const faceAvg = withFace.length
     ? withFace.reduce((s, a) => s + a.face.mean, 0) / withFace.length
@@ -355,11 +357,13 @@ export function bagTips(aggs: ClubAgg[]): { text: string; tone: Tone }[] {
   if (Number.isFinite(faceAvg) && faceAvg < -3)
     out.push({
       text: `Clubface is closed across the bag (~${Math.abs(faceAvg).toFixed(0)}°) — a left-miss/hook bias. Fix grip & face awareness first; it's the biggest lever.`,
+      th: `หน้าไม้ปิดเฉลี่ยทั้งถุง (~${Math.abs(faceAvg).toFixed(0)}°) มีแนวโน้มพลาดซ้าย/hook — แก้กริปและการคุมหน้าไม้ก่อน เป็นจุดที่ได้ผลมากสุด`,
       tone: "bad",
     });
   if (Number.isFinite(pathAvg) && pathAvg < -2)
     out.push({
       text: `You swing out-to-in / over the top (~${Math.abs(pathAvg).toFixed(1)}°). Train an in-to-out feel and shallow the club.`,
+      th: `วงสวิงเข้า-ออก (out-to-in / over the top ~${Math.abs(pathAvg).toFixed(1)}°) — ฝึกฟีลลิ่ง in-to-out และ shallow ไม้ลงมา`,
       tone: "warn",
     });
 
@@ -369,6 +373,7 @@ export function bagTips(aggs: ClubAgg[]): { text: string; tone: Tone }[] {
   if (worst && worst.smash.mean < worst.smashIdeal - 0.08)
     out.push({
       text: `${worst.club} has your weakest contact (smash ${worst.smash.mean.toFixed(2)}). Centre-strike work here pays off most.`,
+      th: `${worst.club} โดนหน้าไม้แย่สุด (smash ${worst.smash.mean.toFixed(2)}) — ฝึกตีให้โดนกลางหน้าไม้ที่ไม้นี้คุ้มสุด`,
       tone: "bad",
     });
 
@@ -378,6 +383,7 @@ export function bagTips(aggs: ClubAgg[]): { text: string; tone: Tone }[] {
   if (loose && loose.consistency > 20)
     out.push({
       text: `${loose.club} is least consistent (CV ${loose.consistency.toFixed(0)}%). Make it reliable or leave it in the bag on course.`,
+      th: `${loose.club} นิ่งน้อยสุด (CV ${loose.consistency.toFixed(0)}%) — ทำให้สม่ำเสมอ หรือเก็บไว้ในถุงตอนออกรอบ`,
       tone: "warn",
     });
 
@@ -387,12 +393,14 @@ export function bagTips(aggs: ClubAgg[]): { text: string; tone: Tone }[] {
   if (best && best.smash.mean >= best.smashIdeal - 0.03)
     out.push({
       text: `${best.club} is your most solid club — build your scoring strategy around it.`,
+      th: `${best.club} คือไม้ที่มั่นใจสุด — วางแผนทำสกอร์โดยอิงไม้นี้`,
       tone: "good",
     });
 
   if (out.length === 0)
     out.push({
       text: "Import a few more sessions to unlock tailored recommendations.",
+      th: "อัปข้อมูลซ้อมเพิ่มอีกหน่อย เพื่อปลดล็อกคำแนะนำเฉพาะตัว",
       tone: "info",
     });
   return out.slice(0, 4);

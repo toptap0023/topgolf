@@ -1,13 +1,6 @@
 import Link from "next/link";
 import { getAllShots, getRounds, getSessions } from "@/lib/data";
-import {
-  aggregateByClub,
-  overallKpis,
-  dispersionFor,
-  statOf,
-  bagTips,
-} from "@/lib/stats";
-import { CATEGORY_COLOR } from "@/lib/clubs";
+import { aggregateByClub, overallKpis, statOf, bagTips } from "@/lib/stats";
 import {
   fmt,
   fmt1,
@@ -23,7 +16,6 @@ import { Card, SectionTitle, StatCard, EmptyState } from "@/components/ui";
 import { GoalProgress } from "@/components/GoalProgress";
 import { GapMonitor } from "@/components/GapMonitor";
 import { ClubTable } from "@/components/ClubTable";
-import { DispersionChart } from "@/components/DispersionChart";
 import { UploadIcon, FlagIcon, ChevronRightIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -77,10 +69,6 @@ export default async function DashboardPage() {
   const face = statOf(shots.map((s) => s.club_face));
   const f2p = statOf(shots.map((s) => s.face_to_path));
   const attack = statOf(shots.map((s) => s.attack_angle));
-
-  const topClub = [...aggs].sort((a, b) => b.count - a.count)[0];
-  const topShots = topClub ? shots.filter((s) => s.club === topClub.club) : [];
-  const disp = dispersionFor(topShots);
 
   const lastPlayed = sessions[0]?.played_on;
 
@@ -157,14 +145,17 @@ export default async function DashboardPage() {
         <SectionTitle sub="Data-driven priorities — pure stats, no AI">
           What to work on
         </SectionTitle>
-        <ul className="flex flex-col gap-2.5">
+        <ul className="flex flex-col gap-3">
           {tips.map((t, i) => (
-            <li key={i} className="flex gap-2.5 text-sm text-ink">
+            <li key={i} className="flex gap-2.5 text-sm">
               <span
                 className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${TONE_DOT[t.tone] ?? "bg-ink-muted"}`}
                 aria-hidden
               />
-              {t.text}
+              <span>
+                <span className="text-ink">{t.text}</span>
+                <span className="mt-1 block text-ink-muted">{t.th}</span>
+              </span>
             </li>
           ))}
         </ul>
@@ -175,66 +166,42 @@ export default async function DashboardPage() {
         <GapMonitor aggs={aggs} />
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {scores.length ? (
         <Card className="p-5">
           <SectionTitle
-            sub={topClub ? `${topClub.club} · ${topClub.count} shots` : undefined}
+            sub="Most recent rounds"
             right={
               <Link
-                href="/analyze"
+                href="/rounds"
                 className="flex items-center gap-0.5 text-sm font-medium text-accent hover:underline"
               >
-                Analyze <ChevronRightIcon className="h-4 w-4" />
+                All rounds <ChevronRightIcon className="h-4 w-4" />
               </Link>
             }
           >
-            Shot pattern
+            Scores
           </SectionTitle>
-          <DispersionChart
-            dispersion={disp}
-            unit={d}
-            club={topClub?.club}
-            color={topClub ? CATEGORY_COLOR[topClub.category] : "#16a34a"}
-          />
-        </Card>
-
-        {scores.length ? (
-          <Card className="p-5">
-            <SectionTitle
-              sub="Most recent rounds"
-              right={
-                <Link
-                  href="/rounds"
-                  className="flex items-center gap-0.5 text-sm font-medium text-accent hover:underline"
+          <ul className="flex flex-col divide-y divide-line">
+            {rounds
+              .filter((r) => r.score != null)
+              .slice(0, 6)
+              .map((r) => (
+                <li
+                  key={r.id}
+                  className="flex items-center justify-between py-2.5 text-sm"
                 >
-                  All rounds <ChevronRightIcon className="h-4 w-4" />
-                </Link>
-              }
-            >
-              Scores
-            </SectionTitle>
-            <ul className="flex flex-col divide-y divide-line">
-              {rounds
-                .filter((r) => r.score != null)
-                .slice(0, 6)
-                .map((r) => (
-                  <li
-                    key={r.id}
-                    className="flex items-center justify-between py-2.5 text-sm"
-                  >
-                    <span className="text-ink-muted">
-                      {formatDate(r.played_on)}
-                      {r.course ? ` · ${r.course}` : ""}
-                    </span>
-                    <span className="tnum text-lg font-bold text-ink">
-                      {r.score}
-                    </span>
-                  </li>
-                ))}
-            </ul>
-          </Card>
-        ) : null}
-      </div>
+                  <span className="text-ink-muted">
+                    {formatDate(r.played_on)}
+                    {r.course ? ` · ${r.course}` : ""}
+                  </span>
+                  <span className="tnum text-lg font-bold text-ink">
+                    {r.score}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        </Card>
+      ) : null}
 
       <Card className="p-5">
         <SectionTitle sub={`Speeds in ${sp}, distances in ${d}`}>
