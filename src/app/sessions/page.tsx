@@ -6,7 +6,7 @@ import { fmt, formatDate, distanceUnitLabel } from "@/lib/format";
 import { Card, EmptyState } from "@/components/ui";
 import { ListIcon, UploadIcon, ChevronRightIcon } from "@/components/icons";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function SessionsPage() {
   const [sessions, shots] = await Promise.all([getSessions(), getAllShots()]);

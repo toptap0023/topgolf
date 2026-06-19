@@ -40,11 +40,9 @@ Repo lives at `Downloads/Garmin golf clone` (package name `topgolf`, GitHub
   server-side against `APP_PASSCODE` in `clearAllData`); there is no site login.
 - **Data flow:** Server Components read via `src/lib/data.ts`; mutations are
   Next **server actions** in `src/app/actions.ts` (+ `revalidatePath`). Data
-  pages currently use `export const dynamic = "force-dynamic"` (server-rendered
-  on every request). That means each visit re-queries Supabase with no caching —
-  combined with a far function region it's the main cause of slowness. A known
-  win (NOT yet applied) is switching these pages to ISR (`export const revalidate
-  = 60`), which stays fresh via the existing `revalidatePath` calls on writes.
+  pages use `export const revalidate = 60` (ISR) — edge-cached and kept fresh by
+  the `revalidatePath` calls on writes. (They previously used `force-dynamic`,
+  which re-queried Supabase on every request and was the main cause of slowness.)
 - **Charts are hand-rolled SVG/CSS** (no chart library). Reuse the existing ones
   rather than adding a dependency.
 - **Theme:** Apple-style CSS-variable tokens in `globals.css` (dark default +
@@ -164,8 +162,8 @@ samples/real-session.csv     a real R10 export (good parser test fixture)
   the deployment ERROR even though `next build` succeeds.
 - **Speed:** if the live app is slow, the cause is usually the Vercel function
   **region** (default `iad1`/US-East while user + Supabase are in Asia). Tell the
-  user to set Function Region → Singapore (`sin1`) and redeploy. Switching the
-  `force-dynamic` pages to ISR (above) would compound the win.
+  user to set Function Region → Singapore (`sin1`) and redeploy. ISR (above) is
+  already in place; the function region is the remaining lever.
 - **Clear-data verify:** the site is public (no redirect/gate). Settings → Danger
   zone → "Clear all data" requires the PIN; the "Forgot PIN?" link there reveals
   it via the recovery code (`revealPin`).

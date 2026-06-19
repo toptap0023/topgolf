@@ -2,7 +2,7 @@ import { getRounds } from "@/lib/data";
 import { RoundsClient } from "@/components/RoundsClient";
 import { RoundsImport } from "@/components/RoundsImport";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 export const metadata = { title: "Rounds · TOPgolf" };
 
 export default async function RoundsPage() {

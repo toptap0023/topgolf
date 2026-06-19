@@ -9,7 +9,7 @@ import { ClubTable } from "@/components/ClubTable";
 import { DispersionChart } from "@/components/DispersionChart";
 import { DeleteSessionButton } from "@/components/DeleteSessionButton";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function SessionDetailPage({
   params,

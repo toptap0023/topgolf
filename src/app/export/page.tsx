@@ -7,7 +7,7 @@ import { ExportClient } from "@/components/ExportClient";
 import { EmptyState } from "@/components/ui";
 import { DownloadIcon, UploadIcon } from "@/components/icons";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 export const metadata = { title: "Export · TOPgolf" };
 
 export default async function ExportPage() {

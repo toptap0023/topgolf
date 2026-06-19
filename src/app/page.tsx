@@ -24,7 +24,7 @@ import { GapMonitor } from "@/components/GapMonitor";
 import { ClubTable } from "@/components/ClubTable";
 import { UploadIcon, FlagIcon, ChevronRightIcon } from "@/components/icons";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const TONE_DOT: Record<string, string> = {
   good: "bg-good",
