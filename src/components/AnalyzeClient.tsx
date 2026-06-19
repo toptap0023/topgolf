@@ -31,6 +31,15 @@ import { Card, SectionTitle, StatCard, Badge } from "./ui";
 import { DispersionChart } from "./DispersionChart";
 import { TrendChart } from "./TrendChart";
 
+// Rough "good amateur" targets per club type — shown under each stat for comparison.
+const IDEAL: Record<string, { launch: string; spin: string }> = {
+  Driver: { launch: "13–15°", spin: "2.4–2.8k" },
+  Wood: { launch: "11–13°", spin: "3.0–3.7k" },
+  Hybrid: { launch: "12–15°", spin: "3.8–4.5k" },
+  Iron: { launch: "15–19°", spin: "5.5–7.5k" },
+  Wedge: { launch: "28–32°", spin: "8–10k" },
+};
+
 export function AnalyzeClient({
   sessionShots,
   distanceUnit,
@@ -86,6 +95,7 @@ export function AnalyzeClient({
   const shape = shotShape(agg);
   const contact = contactQuality(agg);
   const tips = clubTips(agg);
+  const idl = IDEAL[agg.category];
 
   return (
     <div className="flex flex-col gap-5">
@@ -132,12 +142,14 @@ export function AnalyzeClient({
           value={Number.isFinite(agg.consistency) ? fmt1(agg.consistency) : "—"}
           unit="% CV"
           hint="lower = tighter"
+          ideal="< 6%"
         />
         <StatCard
           label="Side bias"
           value={lr(agg.lateral.mean)}
           unit={d}
           hint={`±${fmt1(agg.lateral.std)} spread`}
+          ideal="≈ 0"
         />
         <StatCard
           label="Ball speed"
@@ -147,10 +159,20 @@ export function AnalyzeClient({
         <StatCard
           label="Smash"
           value={fmt2(agg.smash.mean)}
-          hint={`ideal ~${agg.smashIdeal.toFixed(2)}`}
+          ideal={`~${agg.smashIdeal.toFixed(2)}`}
         />
-        <StatCard label="Launch" value={fmt1(agg.launch.mean)} unit="°" />
-        <StatCard label="Spin" value={fmt(agg.spin.mean)} unit="rpm" />
+        <StatCard
+          label="Launch"
+          value={fmt1(agg.launch.mean)}
+          unit="°"
+          ideal={idl?.launch}
+        />
+        <StatCard
+          label="Spin"
+          value={fmt(agg.spin.mean)}
+          unit="rpm"
+          ideal={idl?.spin}
+        />
         <StatCard
           label="Club path"
           value={
@@ -163,6 +185,7 @@ export function AnalyzeClient({
               ? pathDir(agg.clubPath.mean)
               : undefined
           }
+          ideal="≈ 0°"
         />
         <StatCard
           label="Club face"
@@ -175,6 +198,7 @@ export function AnalyzeClient({
             Number.isFinite(agg.face.mean) ? faceDir(agg.face.mean) : undefined
           }
           hint={`face-to-path ${pm(agg.faceToPath.mean)}°`}
+          ideal="≈ 0°"
         />
       </div>
 

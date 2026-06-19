@@ -65,11 +65,13 @@ export function StatCard({
   value,
   unit,
   hint,
+  ideal,
 }: {
   label: string;
   value: ReactNode;
   unit?: string;
   hint?: ReactNode;
+  ideal?: ReactNode;
 }) {
   return (
     <Card className="p-4">
@@ -81,6 +83,12 @@ export function StatCard({
         {unit ? <span className="text-sm text-ink-muted">{unit}</span> : null}
       </p>
       {hint ? <p className="mt-0.5 text-xs text-ink-muted">{hint}</p> : null}
+      {ideal != null ? (
+        <span className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-bg-panel2 px-1.5 py-0.5 text-[10px] font-medium text-ink-muted">
+          <span className="text-accent">ideal</span>
+          <span className="tnum text-ink">{ideal}</span>
+        </span>
+      ) : null}
     </Card>
   );
 }
