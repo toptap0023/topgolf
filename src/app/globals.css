@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme tokens as "R G B" channels so Tailwind's <alpha-value> works.
+   :root = dark (default identity). .light overrides for light mode. */
+:root {
+  color-scheme: dark;
+  --bg-soft: 0 0 0;
+  --bg-panel: 28 28 30;
+  --bg-panel2: 44 44 46;
+  --line: 56 56 58;
+  --ink: 245 245 247;
+  --ink-muted: 152 152 159;
+}
+
+.light {
+  color-scheme: light;
+  --bg-soft: 242 242 247; /* systemGroupedBackground */
+  --bg-panel: 255 255 255; /* card */
+  --bg-panel2: 233 233 235; /* raised fill / inputs */
+  --line: 198 198 202; /* separator */
+  --ink: 28 28 30; /* label */
+  --ink-muted: 99 99 102; /* secondary label */
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: rgb(var(--bg-soft));
+  color: rgb(var(--ink));
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.01em;
+}
+
+/* Inputs: 16px min font-size prevents iOS Safari from zooming on focus */
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+  font-size: 16px;
+}
+
+/* Visible, consistent focus ring for keyboard users (fairway green) */
+:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Hide scrollbars on horizontal chip rows but keep scrollability */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe-area helpers for iPhone (Dynamic Island + home indicator) */
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+/* All numeric readouts line up in columns */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
