@@ -21,7 +21,7 @@ import {
 } from "@/lib/format";
 import { Card, SectionTitle, StatCard, EmptyState } from "@/components/ui";
 import { GoalProgress } from "@/components/GoalProgress";
-import { GappingChart } from "@/components/GappingChart";
+import { GapMonitor } from "@/components/GapMonitor";
 import { ClubTable } from "@/components/ClubTable";
 import { DispersionChart } from "@/components/DispersionChart";
 import { UploadIcon, FlagIcon, ChevronRightIcon } from "@/components/icons";
@@ -71,15 +71,6 @@ export default async function DashboardPage() {
   const scores = rounds.filter((r) => r.score != null).map((r) => r.score as number);
   const current = rounds.find((r) => r.score != null)?.score ?? null;
   const best = scores.length ? Math.min(...scores) : null;
-
-  const gap = aggs
-    .filter((a) => a.carry.n > 0)
-    .map((a) => ({
-      club: a.club,
-      mean: a.carry.mean,
-      std: a.carry.std,
-      color: CATEGORY_COLOR[a.category],
-    }));
 
   const tips = bagTips(aggs);
   const path = statOf(shots.map((s) => s.club_path));
@@ -180,10 +171,8 @@ export default async function DashboardPage() {
       </Card>
 
       <Card className="p-5">
-        <SectionTitle sub={`Average carry per club in ${d}`}>
-          Distance gapping
-        </SectionTitle>
-        <GappingChart items={gap} unit={d} />
+        <SectionTitle>Distance gapping</SectionTitle>
+        <GapMonitor aggs={aggs} />
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">

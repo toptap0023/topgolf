@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { getSessionShots, getSessions } from "@/lib/data";
 import type { Shot } from "@/lib/types";
-import { aggregateByClub } from "@/lib/stats";
 import { AnalyzeClient } from "@/components/AnalyzeClient";
-import { GapMonitor } from "@/components/GapMonitor";
-import { Card, SectionTitle, EmptyState } from "@/components/ui";
+import { EmptyState } from "@/components/ui";
 import { TargetIcon, UploadIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -40,25 +38,13 @@ export default async function AnalyzePage() {
     shots: s.shots.map(({ raw, ...rest }) => rest as Shot),
   }));
 
-  const distanceUnit = sessions[0]?.distance_unit ?? "yds";
-  const speedUnit = sessions[0]?.speed_unit ?? "mph";
-  const aggs = aggregateByClub(lite.flatMap((s) => s.shots));
-
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold text-ink">Analyze</h1>
-
-      <Card className="p-5">
-        <SectionTitle sub="Carry &amp; total ของทุกไม้ในถุง เรียงไกล→ใกล้ พร้อมระยะห่างระหว่างไม้ — เห็นไม้ที่ระยะซ้ำกัน (overlap) และช่วงที่ขาดไม้ (wide gap)">
-          Distance gapping monitor
-        </SectionTitle>
-        <GapMonitor aggs={aggs} distanceUnit={distanceUnit} />
-      </Card>
-
       <AnalyzeClient
         sessionShots={lite}
-        distanceUnit={distanceUnit}
-        speedUnit={speedUnit}
+        distanceUnit={sessions[0]?.distance_unit ?? "yds"}
+        speedUnit={sessions[0]?.speed_unit ?? "mph"}
       />
     </div>
   );
