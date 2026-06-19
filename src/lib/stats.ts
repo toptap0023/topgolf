@@ -1,5 +1,35 @@
-import type { Shot, ShotMetric, ClubCategory } from "./types";
+import type { Shot, ShotMetric, ClubCategory, GolfRound } from "./types";
 import { clubRank, categoryOf } from "./clubs";
+
+/** Rough handicap estimate from logged rounds. We only store score + par (no
+ *  course rating / slope), so a true WHS index isn't possible — this uses
+ *  (score − par) as the differential and averages the best few of the last 20
+ *  rounds, mirroring the WHS "lowest N" table. Surface it as an *estimate*. */
+export function estimateHandicap(rounds: GolfRound[]): {
+  hcp: number | null;
+  avgScore: number | null;
+  n: number;
+} {
+  const scored = rounds
+    .filter((r) => r.score != null)
+    .slice()
+    .sort((a, b) => (a.played_on < b.played_on ? 1 : -1)); // newest first
+  const n = scored.length;
+  const avgScore = n
+    ? scored.reduce((s, r) => s + (r.score as number), 0) / n
+    : null;
+  if (n < 3) return { hcp: null, avgScore, n };
+  const last20 = scored.slice(0, 20);
+  const m = last20.length;
+  const use =
+    m <= 5 ? 1 : m === 6 ? 2 : m <= 8 ? 2 : m <= 11 ? 3 : m <= 14 ? 4 : m <= 16 ? 5 : m <= 18 ? 6 : m === 19 ? 7 : 8;
+  const diffs = last20
+    .map((r) => (r.score as number) - (r.par ?? 72))
+    .sort((a, b) => a - b);
+  const best = diffs.slice(0, use);
+  const hcp = best.reduce((s, d) => s + d, 0) / best.length;
+  return { hcp, avgScore, n };
+}
 
 export interface Stat {
   n: number;
