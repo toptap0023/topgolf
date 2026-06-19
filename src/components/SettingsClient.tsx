@@ -91,34 +91,39 @@ export function SettingsClient() {
                 <b className="tnum tracking-widest text-accent">{revealed}</b>
               </p>
             ) : showRecover ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="รหัสกู้คืน 4 หลัก"
-                  className="max-w-[11rem] rounded-lg border border-line bg-bg-panel px-3 py-1.5 text-center text-sm tracking-[0.2em] text-ink focus:border-accent"
-                />
-                <button
-                  type="button"
-                  disabled={pending || !code.trim()}
-                  onClick={() =>
-                    start(async () => {
-                      const r = await revealPin(code);
-                      if (r.error) {
-                        setError(r.error);
-                        return;
-                      }
-                      setError(null);
-                      setRevealed(r.pin ?? null);
-                    })
-                  }
-                  className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink hover:text-accent disabled:opacity-50 cursor-pointer"
-                >
-                  ดู PIN
-                </button>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="••••"
+                    className="max-w-[11rem] rounded-lg border border-line bg-bg-panel px-3 py-1.5 text-center text-sm tracking-[0.2em] text-ink focus:border-accent"
+                  />
+                  <button
+                    type="button"
+                    disabled={pending || !code.trim()}
+                    onClick={() =>
+                      start(async () => {
+                        const r = await revealPin(code);
+                        if (r.error) {
+                          setError(r.error);
+                          return;
+                        }
+                        setError(null);
+                        setRevealed(r.pin ?? null);
+                      })
+                    }
+                    className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink hover:text-accent disabled:opacity-50 cursor-pointer"
+                  >
+                    ดู PIN
+                  </button>
+                </div>
+                <span className="text-[11px] text-ink-muted">
+                  รหัสกู้คืน = วันเกิด + เดือนเกิด (เช่น 23 ต.ค. → 2310)
+                </span>
               </div>
             ) : (
               <button

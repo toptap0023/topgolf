@@ -1,0 +1,17 @@
+# Keep heavy / generated files out of AI context to save tokens
+node_modules/
+.next/
+out/
+build/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+package-lock.json
+*.log
+
+# Large data fixtures (not needed to edit the app)
+samples/
+sample-garmin-data.csv
+
+# Secrets / local env
+.env*.local
