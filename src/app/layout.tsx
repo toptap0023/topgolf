@@ -16,6 +16,7 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "TOPgolf",
   },
+  icons: { icon: "/icon.svg", apple: "/icon.svg" },
   formatDetection: { telephone: false },
 };
 
