@@ -5,7 +5,7 @@ import {
   overallKpis,
   statOf,
   bagTips,
-  estimateHandicap,
+  scoringSummary,
 } from "@/lib/stats";
 import {
   fmt,
@@ -67,9 +67,9 @@ export default async function DashboardPage() {
   const aggs = aggregateByClub(shots);
   const kpis = overallKpis(shots);
   const scores = rounds.filter((r) => r.score != null).map((r) => r.score as number);
-  const current = rounds.find((r) => r.score != null)?.score ?? null;
   const best = scores.length ? Math.min(...scores) : null;
-  const { hcp, avgScore, n: roundN } = estimateHandicap(rounds);
+  const { hcp, avgScore, avgPutts, avgFairways, avgGir, ideal: scoreIdeal } =
+    scoringSummary(rounds);
 
   const tips = bagTips(aggs);
   const path = statOf(shots.map((s) => s.club_path));
@@ -98,18 +98,33 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <GoalProgress current={current} best={best} />
+      <GoalProgress
+        current={avgScore != null ? Math.round(avgScore) : null}
+        best={best}
+      />
 
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard
-          label="Avg score"
-          value={avgScore != null ? fmt1(avgScore) : "—"}
-          hint={`${roundN} round${roundN === 1 ? "" : "s"}`}
-        />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard
           label="Handicap (est.)"
           value={hcp != null ? fmt1(hcp) : "—"}
           hint={hcp != null ? "ประมาณจาก score − par" : "ต้องมี ≥ 3 รอบ"}
+        />
+        <StatCard
+          label="Avg putts"
+          value={avgPutts != null ? fmt1(avgPutts) : "—"}
+          ideal={String(scoreIdeal.putts)}
+        />
+        <StatCard
+          label="Fairways"
+          value={avgFairways != null ? fmt1(avgFairways) : "—"}
+          unit="/14"
+          ideal={`${scoreIdeal.fairways}/14`}
+        />
+        <StatCard
+          label="GIR"
+          value={avgGir != null ? fmt1(avgGir) : "—"}
+          unit="/18"
+          ideal={`${scoreIdeal.gir}/18`}
         />
       </div>
 

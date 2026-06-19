@@ -32,7 +32,7 @@ export function GoalProgress({
               <>
                 <span className="tnum">{fmt(current)}</span>
                 <span className="ml-1 text-sm font-medium text-ink-muted">
-                  current score
+                  avg score
                 </span>
               </>
             ) : (

@@ -31,6 +31,45 @@ export function estimateHandicap(rounds: GolfRound[]): {
   return { hcp, avgScore, n };
 }
 
+/** Round-level scoring averages + handicap-appropriate "ideal" targets.
+ *  Targets scale with the player's level so the comparison is realistic for a
+ *  high-handicapper, not a tour pro. */
+export function scoringSummary(rounds: GolfRound[]): {
+  hcp: number | null;
+  avgScore: number | null;
+  n: number;
+  avgPutts: number | null;
+  avgFairways: number | null;
+  avgGir: number | null;
+  ideal: { putts: number; fairways: number; gir: number };
+} {
+  const { hcp, avgScore, n } = estimateHandicap(rounds);
+  const avg = (key: "putts" | "fairways_hit" | "greens_in_regulation") => {
+    const xs = rounds
+      .map((r) => r[key])
+      .filter((v): v is number => v != null && Number.isFinite(v));
+    return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null;
+  };
+  // Reference level: estimated hcp, else avg strokes over par, else the 85 goal (~13).
+  const refHcp = hcp ?? (avgScore != null ? Math.max(0, avgScore - 72) : 13);
+  const clamp = (v: number, lo: number, hi: number) =>
+    Math.max(lo, Math.min(hi, v));
+  const ideal = {
+    putts: Math.round(clamp(30 + refHcp * 0.3, 28, 40)),
+    fairways: Math.round(clamp(10 - refHcp * 0.18, 2, 13)),
+    gir: Math.round(clamp(13 - refHcp * 0.45, 1, 14)),
+  };
+  return {
+    hcp,
+    avgScore,
+    n,
+    avgPutts: avg("putts"),
+    avgFairways: avg("fairways_hit"),
+    avgGir: avg("greens_in_regulation"),
+    ideal,
+  };
+}
+
 export interface Stat {
   n: number;
   mean: number;

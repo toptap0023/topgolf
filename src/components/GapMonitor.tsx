@@ -1,6 +1,7 @@
 import type { ClubAgg } from "@/lib/stats";
 import { fmt } from "@/lib/format";
 import { CATEGORY_COLOR, clubRank } from "@/lib/clubs";
+import { GapIcon } from "./icons";
 
 /**
  * Distance-gapping ladder: every club sorted longest → shortest by carry,
@@ -59,8 +60,9 @@ export function GapMonitor({ aggs }: { aggs: ClubAgg[] }) {
             {gap != null ? (
               <div className="flex items-center gap-3">
                 <span className="w-14 shrink-0" aria-hidden />
-                <span className="flex-1 text-center text-[10px] tabular-nums text-ink-muted/50">
-                  ↕ {fmt(Math.abs(gap))}
+                <span className="flex flex-1 items-center justify-center gap-0.5 text-[10px] tabular-nums text-ink-muted/50">
+                  <GapIcon className="h-2.5 w-2.5" />
+                  {fmt(Math.abs(gap))}
                 </span>
                 <span className="w-20 shrink-0" aria-hidden />
               </div>

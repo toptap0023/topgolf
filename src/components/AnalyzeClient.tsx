@@ -30,12 +30,15 @@ import { DispersionChart } from "./DispersionChart";
 import { TrendChart } from "./TrendChart";
 
 // Rough "good amateur" targets per club type — shown under each stat for comparison.
-const IDEAL: Record<string, { launch: string; spin: string }> = {
-  Driver: { launch: "13–15°", spin: "2.4–2.8k" },
-  Wood: { launch: "11–13°", spin: "3.0–3.7k" },
-  Hybrid: { launch: "12–15°", spin: "3.8–4.5k" },
-  Iron: { launch: "15–19°", spin: "5.5–7.5k" },
-  Wedge: { launch: "28–32°", spin: "8–10k" },
+const IDEAL: Record<
+  string,
+  { launch: string; spin: string; carry: string; total: string; ball: string }
+> = {
+  Driver: { launch: "13–15°", spin: "2.4–2.8k", carry: "~230", total: "~250", ball: "~150" },
+  Wood: { launch: "11–13°", spin: "3.0–3.7k", carry: "~205", total: "~220", ball: "~135" },
+  Hybrid: { launch: "12–15°", spin: "3.8–4.5k", carry: "~190", total: "~205", ball: "~125" },
+  Iron: { launch: "15–19°", spin: "5.5–7.5k", carry: "~150", total: "~160", ball: "~110" },
+  Wedge: { launch: "28–32°", spin: "8–10k", carry: "~95", total: "~100", ball: "~85" },
 };
 
 export function AnalyzeClient({
@@ -141,8 +144,14 @@ export function AnalyzeClient({
           value={fmt(agg.carry.mean)}
           unit={d}
           hint={`±${fmt1(agg.carry.std)} σ`}
+          ideal={idl?.carry}
         />
-        <StatCard label="Avg total" value={fmt(agg.total.mean)} unit={d} />
+        <StatCard
+          label="Avg total"
+          value={fmt(agg.total.mean)}
+          unit={d}
+          ideal={idl?.total}
+        />
         <StatCard
           label="Consistency"
           value={Number.isFinite(agg.consistency) ? fmt1(agg.consistency) : "—"}
@@ -161,6 +170,7 @@ export function AnalyzeClient({
           label="Ball speed"
           value={fmt1(agg.ball.mean)}
           unit={sp}
+          ideal={idl?.ball}
         />
         <StatCard
           label="Smash"

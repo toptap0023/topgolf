@@ -110,3 +110,8 @@ export const TrendIcon = ({ className }: P) => (
     <path d="M17 5h4v4" />
   </svg>
 );
+export const GapIcon = ({ className }: P) => (
+  <svg {...base(className)}>
+    <path d="M12 4v16M9 7l3-3 3 3M9 17l3 3 3-3" />
+  </svg>
+);
