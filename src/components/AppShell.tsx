@@ -35,9 +35,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
   const { resolved, toggle } = useTheme();
 
-  // The unlock screen stands alone — no header/nav chrome.
-  if (pathname === "/unlock") return <>{children}</>;
-
   return (
     <div className="min-h-[100dvh]">
       <header className="sticky top-0 z-30 border-b border-line bg-bg-soft/80 backdrop-blur-md pt-safe">

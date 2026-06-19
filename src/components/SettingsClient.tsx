@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
-import { clearAllData } from "@/app/actions";
+import { clearAllData, revealPin } from "@/app/actions";
 import { Card, SectionTitle } from "./ui";
 import { SunIcon, MoonIcon, GearIcon, TrashIcon } from "./icons";
 
@@ -20,6 +20,9 @@ export function SettingsClient() {
   const [confirm, setConfirm] = useState(false);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showRecover, setShowRecover] = useState(false);
+  const [code, setCode] = useState("");
+  const [revealed, setRevealed] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col gap-5">
@@ -50,9 +53,9 @@ export function SettingsClient() {
       <Card className="p-5">
         <SectionTitle>Privacy</SectionTitle>
         <p className="text-sm text-ink-muted">
-          This app has no login. Anyone who has the URL can view, import, and
-          delete your golf data. Keep the link private, or ask to add a simple
-          password later.
+          เปิดสาธารณะ — ใครมีลิงก์ก็เข้าดู / อัปข้อมูลได้ ไม่มีหน้า login. มีแค่
+          การ <b className="text-ink">ลบข้อมูลทั้งหมด</b> ด้านล่างเท่านั้นที่ต้องใส่
+          PIN เพื่อกันลบโดยไม่ตั้งใจ.
         </p>
       </Card>
 
@@ -81,6 +84,55 @@ export function SettingsClient() {
                 className="max-w-[12rem] rounded-xl border border-line bg-bg-panel px-4 py-2.5 text-center tracking-[0.3em] text-ink focus:border-bad"
               />
             </div>
+
+            {revealed ? (
+              <p className="text-sm text-ink-muted">
+                PIN ของคุณคือ{" "}
+                <b className="tnum tracking-widest text-accent">{revealed}</b>
+              </p>
+            ) : showRecover ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="รหัสกู้คืน 4 หลัก"
+                  className="max-w-[11rem] rounded-lg border border-line bg-bg-panel px-3 py-1.5 text-center text-sm tracking-[0.2em] text-ink focus:border-accent"
+                />
+                <button
+                  type="button"
+                  disabled={pending || !code.trim()}
+                  onClick={() =>
+                    start(async () => {
+                      const r = await revealPin(code);
+                      if (r.error) {
+                        setError(r.error);
+                        return;
+                      }
+                      setError(null);
+                      setRevealed(r.pin ?? null);
+                    })
+                  }
+                  className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink hover:text-accent disabled:opacity-50 cursor-pointer"
+                >
+                  ดู PIN
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRecover(true);
+                  setError(null);
+                }}
+                className="self-start text-xs text-ink-muted underline-offset-2 hover:text-ink hover:underline cursor-pointer"
+              >
+                ลืม PIN?
+              </button>
+            )}
+
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
@@ -108,6 +160,9 @@ export function SettingsClient() {
                   setConfirm(false);
                   setPin("");
                   setError(null);
+                  setShowRecover(false);
+                  setCode("");
+                  setRevealed(null);
                 }}
                 className="text-sm text-ink-muted hover:text-ink cursor-pointer"
               >

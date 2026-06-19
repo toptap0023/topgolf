@@ -10,12 +10,10 @@ it into Gemini / ChatGPT / Claude.
 Built with **Next.js 15** (App Router) + **Supabase** (Postgres) + **Tailwind CSS**,
 deployable free on **Vercel**. Mobile-first PWA; dark OLED theme with a light mode.
 
-> **Single-user PIN gate.** No accounts — the whole site sits behind one
-> passphrase (`APP_PASSCODE`), checked server-side in `middleware.ts`. Enter it
-> once per device (no timeout). "Forgot PIN?" reveals it when you enter
-> `APP_RECOVERY_CODE`. Clearing all data also requires the PIN. (The Supabase
-> anon key is still public, so this deters casual access rather than being
-> hardened auth — fine for a private personal URL.)
+> **Public, no login.** Anyone with the URL can view and import data — there's no
+> sign-in. The only protected action is **Clear all data**, which requires a PIN
+> (`APP_PASSCODE`) to prevent accidental wipes; a "Forgot PIN?" link there reveals
+> it via `APP_RECOVERY_CODE`. Keep the URL private if you'd rather others not see it.
 
 ---
 
@@ -65,10 +63,10 @@ project.
 3. Add the environment variables:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `APP_PASSCODE` — the PIN that unlocks the site (e.g. `232537`). Leave blank to disable the gate.
-   - `APP_RECOVERY_CODE` — shown-on-request code that reveals the PIN via "Forgot PIN?" (e.g. `2310`).
+   - `APP_PASSCODE` — PIN required to **Clear all data** (e.g. `232537`). Leave blank to skip the check.
+   - `APP_RECOVERY_CODE` — code that reveals the PIN via "Forgot PIN?" in the clear-data flow (e.g. `2310`).
 4. **Deploy.** On your phone, open the URL → Share → **Add to Home Screen** for a
-   full-screen app. First visit asks for the PIN once per device (no timeout).
+   full-screen app.
 
 ---
 

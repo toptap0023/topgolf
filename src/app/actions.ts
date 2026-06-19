@@ -145,3 +145,14 @@ export async function clearAllData(pin: string): Promise<{ error?: string }> {
   revalidateAll();
   return {};
 }
+
+/** "Forgot PIN" recovery: a correct recovery code reveals the current PIN.
+ *  Used inside the Clear-all-data flow (the only PIN-gated action). */
+export async function revealPin(
+  code: string
+): Promise<{ pin?: string; error?: string }> {
+  if (!process.env.APP_RECOVERY_CODE) return { error: "ยังไม่ได้ตั้งรหัสกู้คืน" };
+  if (code.trim() !== process.env.APP_RECOVERY_CODE)
+    return { error: "รหัสกู้คืนไม่ถูกต้อง" };
+  return { pin: process.env.APP_PASSCODE };
+}
