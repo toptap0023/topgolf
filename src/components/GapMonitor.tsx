@@ -1,6 +1,6 @@
 import type { ClubAgg } from "@/lib/stats";
 import { fmt } from "@/lib/format";
-import { CATEGORY_COLOR } from "@/lib/clubs";
+import { CATEGORY_COLOR, clubRank } from "@/lib/clubs";
 
 /**
  * Distance-gapping ladder: every club sorted longest → shortest by carry,
@@ -19,7 +19,7 @@ export function GapMonitor({ aggs }: { aggs: ClubAgg[] }) {
           : a.carry.mean,
       color: CATEGORY_COLOR[a.category],
     }))
-    .sort((x, y) => y.carry - x.carry);
+    .sort((x, y) => clubRank(x.club) - clubRank(y.club));
 
   if (rows.length === 0)
     return <p className="text-sm text-ink-muted">No carry data yet.</p>;
@@ -60,7 +60,7 @@ export function GapMonitor({ aggs }: { aggs: ClubAgg[] }) {
               <div className="flex items-center gap-3">
                 <span className="w-14 shrink-0" aria-hidden />
                 <span className="flex-1 text-center text-[10px] tabular-nums text-ink-muted/50">
-                  ↕ {fmt(gap)}
+                  ↕ {fmt(Math.abs(gap))}
                 </span>
                 <span className="w-20 shrink-0" aria-hidden />
               </div>
