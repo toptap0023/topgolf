@@ -12,6 +12,8 @@ import {
   slope,
   shotShape,
   contactQuality,
+  strikeVerdict,
+  twoWayMiss,
 } from "@/lib/stats";
 import { CATEGORY_COLOR } from "@/lib/clubs";
 import {
@@ -106,6 +108,14 @@ export function AnalyzeClient({
   const tips = clubTips(agg);
   const idl = IDEAL[agg.category];
 
+  // Coaching insights (derived)
+  const strike = strikeVerdict(agg);
+  const tw = twoWayMiss(clubShots);
+  const reliableCarry = agg.carry.n ? agg.carry.mean - 0.5 * agg.carry.std : NaN;
+  const smashEff = agg.smash.n ? (agg.smash.mean / agg.smashIdeal) * 100 : NaN;
+  const dispRadius = Math.hypot(disp.sdX, disp.sdY);
+  const aoaIdeal = agg.category === "Driver" ? "+2–5°" : "≤ 0°";
+
   return (
     <div className="flex flex-col gap-5">
       <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
@@ -138,84 +148,216 @@ export function AnalyzeClient({
         <span className="text-sm text-ink-muted">· {agg.count} shots</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard
-          label="Avg carry"
-          value={fmt(agg.carry.mean)}
-          unit={d}
-          hint={`±${fmt1(agg.carry.std)} σ`}
-          ideal={idl?.carry}
-        />
-        <StatCard
-          label="Avg total"
-          value={fmt(agg.total.mean)}
-          unit={d}
-          ideal={idl?.total}
-        />
-        <StatCard
-          label="Consistency"
-          value={Number.isFinite(agg.consistency) ? fmt1(agg.consistency) : "—"}
-          unit="% CV"
-          hint="lower = tighter"
-          ideal="< 6%"
-        />
-        <StatCard
-          label="Side bias"
-          value={lr(agg.lateral.mean)}
-          unit={d}
-          hint={`±${fmt1(agg.lateral.std)} spread`}
-          ideal="≈ 0"
-        />
-        <StatCard
-          label="Ball speed"
-          value={fmt1(agg.ball.mean)}
-          unit={sp}
-          ideal={idl?.ball}
-        />
-        <StatCard
-          label="Smash"
-          value={fmt2(agg.smash.mean)}
-          ideal={`~${agg.smashIdeal.toFixed(2)}`}
-        />
-        <StatCard
-          label="Launch"
-          value={fmt1(agg.launch.mean)}
-          unit="°"
-          ideal={idl?.launch}
-        />
-        <StatCard
-          label="Spin"
-          value={fmt(agg.spin.mean)}
-          unit="rpm"
-          ideal={idl?.spin}
-        />
-        <StatCard
-          label="Club path"
-          value={
-            Number.isFinite(agg.clubPath.mean)
-              ? `${fmt1(Math.abs(agg.clubPath.mean))}°`
-              : "—"
-          }
-          unit={
-            Number.isFinite(agg.clubPath.mean)
-              ? pathDir(agg.clubPath.mean)
-              : undefined
-          }
-          ideal="≈ 0°"
-        />
-        <StatCard
-          label="Club face"
-          value={
-            Number.isFinite(agg.face.mean)
-              ? `${fmt1(Math.abs(agg.face.mean))}°`
-              : "—"
-          }
-          unit={
-            Number.isFinite(agg.face.mean) ? faceDir(agg.face.mean) : undefined
-          }
-          hint={`face-to-path ${pm(agg.faceToPath.mean)}°`}
-          ideal="≈ 0°"
-        />
+      {/* 1 — Coaching insights (most actionable first) */}
+      <div>
+        <SectionTitle sub="สิ่งที่ควรแก้ก่อน — ดูตรงนี้ก่อนเลย">
+          Coaching insights
+        </SectionTitle>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <StatCard
+            label="Strike"
+            value={
+              Number.isFinite(agg.attackAngle.mean)
+                ? `${pm(agg.attackAngle.mean)}°`
+                : "—"
+            }
+            unit="AoA"
+            badge={{ label: strike.label, tone: strike.tone }}
+            hint={strike.detail}
+            ideal={aoaIdeal}
+          />
+          <StatCard
+            label="Reliable carry"
+            value={Number.isFinite(reliableCarry) ? fmt(reliableCarry) : "—"}
+            unit={d}
+            hint="ระยะที่ตีถึง ~70% ใช้เลือกไม้จริง"
+          />
+          <StatCard
+            label="Two-way miss"
+            value={
+              tw.n
+                ? `L ${fmt(tw.leftPct)}% · R ${fmt(tw.rightPct)}%`
+                : "—"
+            }
+            badge={
+              tw.n
+                ? tw.twoWay
+                  ? { label: "พลาด 2 ทาง", tone: "bad" }
+                  : Math.max(tw.leftPct, tw.rightPct) >= 40
+                    ? {
+                        label: `เอียง${tw.leftPct >= tw.rightPct ? "ซ้าย" : "ขวา"}`,
+                        tone: "warn",
+                      }
+                    : { label: "ตีตรง", tone: "good" }
+                : undefined
+            }
+            hint="พลาด ≥8% ของ carry ทั้งซ้ายและขวา = หน้าไม้ไม่นิ่ง"
+          />
+          <StatCard
+            label="Smash efficiency"
+            value={Number.isFinite(smashEff) ? fmt(smashEff) : "—"}
+            unit="%"
+            hint="เทียบ smash ideal — โดนเต็มหน้าไม้แค่ไหน"
+            ideal="100%"
+          />
+        </div>
+      </div>
+
+      {/* 2 — Key numbers */}
+      <div>
+        <SectionTitle sub="ตัวเลขหลักที่ใช้ตัดสินใจ">Key numbers</SectionTitle>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <StatCard
+            label="Avg carry"
+            value={fmt(agg.carry.mean)}
+            unit={d}
+            hint={`±${fmt1(agg.carry.std)} σ`}
+            max={Number.isFinite(agg.carry.max) ? fmt(agg.carry.max) : undefined}
+            ideal={idl?.carry}
+          />
+          <StatCard
+            label="Dispersion radius"
+            value={Number.isFinite(dispRadius) ? fmt1(dispRadius) : "—"}
+            unit={d}
+            hint="รัศมีวงกระจาย ±1σ — เล็ก = แม่น"
+          />
+          <StatCard
+            label="Side bias"
+            value={lr(agg.lateral.mean)}
+            unit={d}
+            hint={`±${fmt1(agg.lateral.std)} spread`}
+            ideal="≈ 0"
+          />
+          <StatCard
+            label="Consistency"
+            value={Number.isFinite(agg.consistency) ? fmt1(agg.consistency) : "—"}
+            unit="% CV"
+            hint="lower = tighter"
+            ideal="< 6%"
+          />
+          <StatCard
+            label="Avg total"
+            value={fmt(agg.total.mean)}
+            unit={d}
+            max={Number.isFinite(agg.total.max) ? fmt(agg.total.max) : undefined}
+            ideal={idl?.total}
+          />
+          <StatCard
+            label="Smash"
+            value={fmt2(agg.smash.mean)}
+            max={Number.isFinite(agg.smash.max) ? fmt2(agg.smash.max) : undefined}
+            ideal={`~${agg.smashIdeal.toFixed(2)}`}
+          />
+        </div>
+      </div>
+
+      {/* 3 — Delivery */}
+      <div>
+        <SectionTitle sub="หน้าไม้/วงสวิงตอนปะทะ — สาเหตุของ ball flight">
+          Delivery
+        </SectionTitle>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <StatCard
+            label="Club path"
+            value={
+              Number.isFinite(agg.clubPath.mean)
+                ? `${agg.clubPath.mean > 0 ? "R" : agg.clubPath.mean < 0 ? "L" : ""}${fmt1(Math.abs(agg.clubPath.mean))}°`
+                : "—"
+            }
+            unit={
+              Number.isFinite(agg.clubPath.mean)
+                ? pathDir(agg.clubPath.mean)
+                : undefined
+            }
+            hint="R = in→out · L = out→in"
+            ideal="≈ 0°"
+          />
+          <StatCard
+            label="Club face"
+            value={
+              Number.isFinite(agg.face.mean)
+                ? `${agg.face.mean > 0 ? "R" : agg.face.mean < 0 ? "L" : ""}${fmt1(Math.abs(agg.face.mean))}°`
+                : "—"
+            }
+            unit={
+              Number.isFinite(agg.face.mean) ? faceDir(agg.face.mean) : undefined
+            }
+            hint="R = open · L = closed"
+            ideal="≈ 0°"
+          />
+          <StatCard
+            label="Face to path"
+            value={Number.isFinite(agg.faceToPath.mean) ? `${pm(agg.faceToPath.mean)}°` : "—"}
+            hint="+ = หน้าเปิดกว่า path · − = ปิดกว่า"
+            ideal="≈ 0°"
+          />
+        </div>
+      </div>
+
+      {/* 4 — Launch & spin */}
+      <div>
+        <SectionTitle sub="มุมขึ้น + สปิน">Launch &amp; spin</SectionTitle>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <StatCard
+            label="Launch"
+            value={fmt1(agg.launch.mean)}
+            unit="°"
+            max={Number.isFinite(agg.launch.max) ? fmt1(agg.launch.max) : undefined}
+            ideal={idl?.launch}
+          />
+          <StatCard
+            label="Spin"
+            value={fmt(agg.spin.mean)}
+            unit="rpm"
+            max={Number.isFinite(agg.spin.max) ? fmt(agg.spin.max) : undefined}
+            ideal={idl?.spin}
+          />
+          <StatCard
+            label="Backspin"
+            value={Number.isFinite(agg.backspin.mean) ? fmt(agg.backspin.mean) : "—"}
+            unit="rpm"
+            max={Number.isFinite(agg.backspin.max) ? fmt(agg.backspin.max) : undefined}
+          />
+          <StatCard
+            label="Sidespin"
+            value={Number.isFinite(agg.sideSpin.mean) ? lr(agg.sideSpin.mean) : "—"}
+            unit="rpm"
+            hint="+R / −L — ทิศโค้งของลูก"
+          />
+          <StatCard
+            label="Spin axis"
+            value={Number.isFinite(agg.spinAxis.mean) ? lr(agg.spinAxis.mean, 1) : "—"}
+            unit="°"
+            hint="แกนสปินเอียง +R / −L — ทิศโค้งของลูก"
+          />
+          <StatCard
+            label="Apex"
+            value={Number.isFinite(agg.apex.mean) ? fmt1(agg.apex.mean) : "—"}
+            unit="m"
+            max={Number.isFinite(agg.apex.max) ? fmt1(agg.apex.max) : undefined}
+            hint="ความสูงสูงสุดของลูก"
+          />
+        </div>
+      </div>
+
+      {/* 5 — Speed */}
+      <div>
+        <SectionTitle sub="ความเร็ว">Speed</SectionTitle>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <StatCard
+            label="Ball speed"
+            value={fmt1(agg.ball.mean)}
+            unit={sp}
+            max={Number.isFinite(agg.ball.max) ? fmt1(agg.ball.max) : undefined}
+            ideal={idl?.ball}
+          />
+          <StatCard
+            label="Club speed"
+            value={Number.isFinite(agg.clubSpeed.mean) ? fmt1(agg.clubSpeed.mean) : "—"}
+            unit={sp}
+            max={Number.isFinite(agg.clubSpeed.max) ? fmt1(agg.clubSpeed.max) : undefined}
+          />
+        </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
