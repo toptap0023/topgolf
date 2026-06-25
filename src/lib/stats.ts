@@ -111,10 +111,50 @@ export const SMASH_IDEAL: Record<ClubCategory, number> = {
   Other: 1.4,
 };
 
+// A "mishit" (top/duff/chunk) carries far shorter than normal and skews every
+// stat. Flag shots whose carry is below MISS_THRESHOLD × the club's median carry
+// and drop them from the analysis, reported separately as a miss rate. Median
+// (not mean) so the mishits themselves don't move the cutoff. Skip the check
+// when a club has too few shots — the median would be too noisy to trust.
+// ponytail: fixed % + min-N; expose as constants so they're tunable later.
+export const MISS_THRESHOLD = 0.7;
+export const MIN_SHOTS_FOR_MISS = 5;
+
+function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+/** Split a single club's shots into clean vs mishit by carry distance.
+ *  Shots without a carry value are dropped entirely (can't classify). */
+export function splitMisses(shots: Shot[]): {
+  clean: Shot[];
+  missCount: number;
+  missRate: number; // % of carry-bearing shots flagged, NaN if not enough data
+} {
+  const withCarry = shots.filter(
+    (s) => s.carry_distance != null && Number.isFinite(s.carry_distance)
+  );
+  if (withCarry.length < MIN_SHOTS_FOR_MISS)
+    return { clean: withCarry, missCount: 0, missRate: NaN };
+  const cutoff =
+    median(withCarry.map((s) => s.carry_distance as number)) * MISS_THRESHOLD;
+  const clean: Shot[] = [];
+  let missCount = 0;
+  for (const s of withCarry) {
+    if ((s.carry_distance as number) < cutoff) missCount++;
+    else clean.push(s);
+  }
+  return { clean, missCount, missRate: (missCount / withCarry.length) * 100 };
+}
+
 export interface ClubAgg {
   club: string;
   category: ClubCategory;
   count: number;
+  missCount: number;
+  missRate: number; // % of shots that were mishits, NaN if not enough data
   carry: Stat;
   total: Stat;
   ball: Stat;
@@ -147,11 +187,12 @@ export function aggregateByClub(shots: Shot[]): ClubAgg[] {
   }
 
   const aggs: ClubAgg[] = [];
-  for (const [club, gs] of groups) {
+  for (const [club, all] of groups) {
+    const { clean: gs, missCount, missRate } = splitMisses(all);
     const carry = statOf(col(gs, "carry_distance"));
     let lateral = statOf(col(gs, "carry_deviation_distance"));
     if (lateral.n === 0) lateral = statOf(col(gs, "total_deviation_distance"));
-    const category = gs[0].club_category ?? categoryOf(club);
+    const category = (gs[0] ?? all[0]).club_category ?? categoryOf(club);
     const consistency =
       carry.n > 1 && carry.mean > 0 ? (carry.std / carry.mean) * 100 : NaN;
 
@@ -159,6 +200,8 @@ export function aggregateByClub(shots: Shot[]): ClubAgg[] {
       club,
       category,
       count: gs.length,
+      missCount,
+      missRate,
       carry,
       total: statOf(col(gs, "total_distance")),
       ball: statOf(col(gs, "ball_speed")),
@@ -182,7 +225,9 @@ export function aggregateByClub(shots: Shot[]): ClubAgg[] {
     });
   }
 
-  return aggs.sort((a, b) => clubRank(a.club) - clubRank(b.club));
+  return aggs
+    .filter((a) => a.count > 0) // skip clubs with no carry data to analyze
+    .sort((a, b) => clubRank(a.club) - clubRank(b.club));
 }
 
 export interface Kpis {

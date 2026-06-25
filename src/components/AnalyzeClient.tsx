@@ -14,6 +14,7 @@ import {
   contactQuality,
   strikeVerdict,
   twoWayMiss,
+  splitMisses,
 } from "@/lib/stats";
 import { CATEGORY_COLOR } from "@/lib/clubs";
 import {
@@ -43,6 +44,14 @@ const IDEAL: Record<
   Wedge: { launch: "28–32°", spin: "8–10k", carry: "~95", total: "~100", ball: "~85" },
 };
 
+// "2026-06-25" → "25 Jun". Parse as local (append T00:00) to avoid a UTC
+// off-by-one day shift.
+const dayLabel = (d: string) =>
+  new Date(`${d}T00:00:00`).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+  });
+
 export function AnalyzeClient({
   sessionShots,
   distanceUnit,
@@ -52,19 +61,32 @@ export function AnalyzeClient({
   distanceUnit: DistanceUnit;
   speedUnit: SpeedUnit;
 }) {
-  const allShots = useMemo(
-    () => sessionShots.flatMap((s) => s.shots),
-    [sessionShots]
-  );
-  const aggs = useMemo(() => aggregateByClub(allShots), [allShots]);
-  const clubs = aggs.map((a) => a.club);
-  const [club, setClub] = useState<string>(clubs[0] ?? "");
+  const [day, setDay] = useState<string>("all"); // "all" | YYYY-MM-DD
+  const [club, setClub] = useState<string>("");
   const [range, setRange] = useState(12); // trend window in months
 
-  const agg = aggs.find((a) => a.club === club);
+  // Dates that actually have sessions, newest first — drives the day pills.
+  const dates = useMemo(() => {
+    const set = new Set(sessionShots.map((s) => s.date));
+    return [...set].sort((a, b) => (a < b ? 1 : -1));
+  }, [sessionShots]);
+
+  // Scope the page to one day (focus) or all sessions (overview).
+  const scoped = useMemo(
+    () => (day === "all" ? sessionShots : sessionShots.filter((s) => s.date === day)),
+    [sessionShots, day]
+  );
+  const allShots = useMemo(() => scoped.flatMap((s) => s.shots), [scoped]);
+  const aggs = useMemo(() => aggregateByClub(allShots), [allShots]);
+  const clubs = aggs.map((a) => a.club);
+  // The selected club may not exist in the current scope (e.g. not hit that
+  // day) — fall back to the first available club instead of showing nothing.
+  const activeClub = clubs.includes(club) ? club : clubs[0] ?? "";
+
+  const agg = aggs.find((a) => a.club === activeClub);
   const clubShots = useMemo(
-    () => allShots.filter((s: Shot) => s.club === club),
-    [allShots, club]
+    () => splitMisses(allShots.filter((s: Shot) => s.club === activeClub)).clean,
+    [allShots, activeClub]
   );
   const disp = useMemo(() => dispersionFor(clubShots), [clubShots]);
 
@@ -83,13 +105,13 @@ export function AnalyzeClient({
     [sessionShots, cutoff]
   );
   const pts = (metric: ShotMetric) =>
-    metricTrend(trendData, metric, club).map((p) => ({
+    metricTrend(trendData, metric, activeClub).map((p) => ({
       date: p.date,
       value: p.value,
     }));
   const carryPts = pts("carry_distance");
   const sidePts = pts("carry_deviation_distance");
-  const consPts = consistencyTrend(trendData, club).map((p) => ({
+  const consPts = consistencyTrend(trendData, activeClub).map((p) => ({
     date: p.date,
     value: p.value,
   }));
@@ -118,14 +140,40 @@ export function AnalyzeClient({
 
   return (
     <div className="flex flex-col gap-5">
+      <div
+        className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4"
+        role="group"
+        aria-label="Filter by day"
+      >
+        {[
+          { key: "all", label: "All" },
+          ...dates.map((dd) => ({ key: dd, label: dayLabel(dd) })),
+        ].map((opt) => (
+          <button
+            key={opt.key}
+            type="button"
+            onClick={() => setDay(opt.key)}
+            aria-pressed={day === opt.key}
+            className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-200 cursor-pointer ${
+              day === opt.key
+                ? "border-accent bg-accent/10 text-accent"
+                : "border-line text-ink-muted hover:text-ink"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
         {aggs.map((a) => (
           <button
             key={a.club}
             type="button"
             onClick={() => setClub(a.club)}
+            aria-pressed={a.club === activeClub}
             className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-200 cursor-pointer ${
-              a.club === club
+              a.club === activeClub
                 ? "border-accent bg-accent/10 text-accent"
                 : "border-line text-ink-muted hover:text-ink"
             }`}
@@ -142,10 +190,12 @@ export function AnalyzeClient({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-xl font-bold text-ink">{club}</h2>
+        <h2 className="text-xl font-bold text-ink">{activeClub}</h2>
         <Badge tone={shape.tone}>{shape.label}</Badge>
         <Badge tone={contact.tone}>{contact.label} contact</Badge>
-        <span className="text-sm text-ink-muted">· {agg.count} shots</span>
+        <span className="text-sm text-ink-muted">
+          · {agg.count} shots{day !== "all" ? ` · ${dayLabel(day)}` : ""}
+        </span>
       </div>
 
       {/* 1 — Coaching insights (most actionable first) */}
@@ -234,6 +284,17 @@ export function AnalyzeClient({
             unit="% CV"
             hint="lower = tighter"
             ideal="< 6%"
+          />
+          <StatCard
+            label="Miss rate"
+            value={Number.isFinite(agg.missRate) ? fmt(agg.missRate) : "n/a"}
+            unit={Number.isFinite(agg.missRate) ? "%" : undefined}
+            hint={
+              Number.isFinite(agg.missRate)
+                ? `${agg.missCount} / ${agg.count + agg.missCount} mishit`
+                : "need ≥5 shots"
+            }
+            ideal="0%"
           />
           <StatCard
             label="Avg total"
@@ -360,7 +421,7 @@ export function AnalyzeClient({
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className={`grid gap-5 ${day === "all" ? "lg:grid-cols-2" : ""}`}>
         <Card className="p-5">
           <SectionTitle sub="Each dot is one shot; ellipse = ±1σ group">
             Shot pattern
@@ -369,12 +430,14 @@ export function AnalyzeClient({
             <DispersionChart
               dispersion={disp}
               unit={d}
-              club={club}
+              club={activeClub}
               color={color}
             />
           </div>
         </Card>
 
+        {/* Trends need multiple sessions — hidden when focused on one day. */}
+        {day === "all" && (
         <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
@@ -433,10 +496,11 @@ export function AnalyzeClient({
             />
           </Card>
         </div>
+        )}
       </div>
 
       <Card className="p-5">
-        <SectionTitle sub={`Quick, data-driven pointers for your ${club}`}>
+        <SectionTitle sub={`Quick, data-driven pointers for your ${activeClub}`}>
           What to work on
         </SectionTitle>
         {carryPts.length >= 2 ? (
