@@ -77,25 +77,6 @@ export function formatDateShort(iso: string | null | undefined): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function formatMonthShort(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso.length <= 7 ? `${iso}-01T00:00:00` : iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-}
-
-export function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 /** Today as YYYY-MM-DD (local). */
 export function todayISO(): string {
   const d = new Date();

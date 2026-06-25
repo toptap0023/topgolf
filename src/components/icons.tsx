@@ -77,11 +77,6 @@ export const PlusIcon = ({ className }: P) => (
     <path d="M12 5v14M5 12h14" />
   </svg>
 );
-export const CloseIcon = ({ className }: P) => (
-  <svg {...base(className)}>
-    <path d="M18 6 6 18M6 6l12 12" />
-  </svg>
-);
 export const TrashIcon = ({ className }: P) => (
   <svg {...base(className)}>
     <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
@@ -102,12 +97,6 @@ export const CheckIcon = ({ className }: P) => (
 export const ChevronRightIcon = ({ className }: P) => (
   <svg {...base(className)}>
     <path d="m9 18 6-6-6-6" />
-  </svg>
-);
-export const TrendIcon = ({ className }: P) => (
-  <svg {...base(className)}>
-    <path d="M3 17l6-6 4 4 7-7" />
-    <path d="M17 5h4v4" />
   </svg>
 );
 export const GapIcon = ({ className }: P) => (

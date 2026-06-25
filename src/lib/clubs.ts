@@ -85,15 +85,3 @@ export const CATEGORY_COLOR: Record<ClubCategory, string> = {
   Putter: "#8e8e93",
   Other: "#5ac8fa",
 };
-
-/** General categorical series palette for multi-line charts. */
-export const SERIES_COLORS = [
-  "#16a34a",
-  "#0a84ff",
-  "#ff9f0a",
-  "#bf5af2",
-  "#5ac8fa",
-  "#ff375f",
-  "#30d158",
-  "#ffd60a",
-];

@@ -407,21 +407,6 @@ export function shotShape(agg: ClubAgg): Tendency {
     : { label: "Draw", detail: "Gentle right-to-left", tone: "warn" };
 }
 
-/** Merge sessions within the same calendar month into one point (for monthly trends). */
-export function groupByMonth(data: SessionShots[]): SessionShots[] {
-  const map = new Map<string, Shot[]>();
-  for (const s of data) {
-    const ym = (s.date || "").slice(0, 7);
-    if (!ym) continue;
-    const g = map.get(ym);
-    if (g) g.push(...s.shots);
-    else map.set(ym, [...s.shots]);
-  }
-  return [...map.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([ym, shots]) => ({ id: ym, date: `${ym}-01`, shots }));
-}
-
 /** Short, preliminary "what to adjust" tips for one club — pure logic, no AI. */
 export function clubTips(agg: ClubAgg): { text: string; th: string }[] {
   const tips: { text: string; th: string }[] = [];

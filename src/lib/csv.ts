@@ -108,13 +108,6 @@ export function roundsToCsv(rounds: GolfRound[]): string {
   return [head, ...lines].join("\n");
 }
 
-export function exportFilename(prefix: string): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  return `${prefix}-${stamp}.csv`;
-}
-
 /** Ready-to-paste prompt that turns the stats into an AI coaching request. */
 export function buildCoachPrompt(opts: {
   aggs: ClubAgg[];
