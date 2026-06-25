@@ -66,12 +66,16 @@ export function StatCard({
   unit,
   hint,
   ideal,
+  max,
+  badge,
 }: {
   label: string;
   value: ReactNode;
   unit?: string;
   hint?: ReactNode;
   ideal?: ReactNode;
+  max?: ReactNode;
+  badge?: { label: string; tone: Tone };
 }) {
   return (
     <Card className="p-4">
@@ -82,7 +86,17 @@ export function StatCard({
         <span className="tnum text-2xl font-bold text-ink">{value}</span>
         {unit ? <span className="text-sm text-ink-muted">{unit}</span> : null}
       </p>
+      {badge ? (
+        <p className="mt-1.5">
+          <Badge tone={badge.tone}>{badge.label}</Badge>
+        </p>
+      ) : null}
       {hint ? <p className="mt-0.5 text-xs text-ink-muted">{hint}</p> : null}
+      {max != null ? (
+        <p className="mt-0.5 text-xs text-ink-muted">
+          max <span className="tnum text-ink">{max}</span>
+        </p>
+      ) : null}
       {ideal != null ? (
         <span className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-bg-panel2 px-1.5 py-0.5 text-[10px] font-medium text-ink-muted">
           <span className="text-accent">ideal</span>

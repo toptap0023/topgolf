@@ -128,6 +128,8 @@ export interface ClubAgg {
   clubPath: Stat;
   face: Stat;
   faceToPath: Stat;
+  attackAngle: Stat; // + = up, − = down
+  spinAxis: Stat; // tilt of spin (+R / −L) → curve direction
   lateral: Stat; // carry offline (+R/-L), falls back to total offline
   apex: Stat;
   longestCarry: number;
@@ -170,6 +172,8 @@ export function aggregateByClub(shots: Shot[]): ClubAgg[] {
       clubPath: statOf(col(gs, "club_path")),
       face: statOf(col(gs, "club_face")),
       faceToPath: statOf(col(gs, "face_to_path")),
+      attackAngle: statOf(col(gs, "attack_angle")),
+      spinAxis: statOf(col(gs, "spin_axis")),
       lateral,
       apex: statOf(col(gs, "apex_height")),
       longestCarry: carry.n ? carry.max : NaN,
@@ -495,4 +499,50 @@ export function contactQuality(agg: ClubAgg): Tendency {
   if (diff >= -0.08)
     return { label: "Decent", detail: "Slightly off-center", tone: "warn" };
   return { label: "Thin / toe-heel", detail: "Poor contact", tone: "bad" };
+}
+
+/**
+ * Strike verdict from attack angle + smash. Driver wants +AoA (hit up);
+ * everything off the turf wants ≤0 (ball-first). Flags "ตีหลังลูก" when the
+ * club comes in level/up AND smash is down — a fat/thin signature.
+ */
+export function strikeVerdict(agg: ClubAgg): Tendency {
+  const aoa = agg.attackAngle.n ? agg.attackAngle.mean : NaN;
+  if (!Number.isFinite(aoa))
+    return { label: "—", detail: "ไม่มีข้อมูล attack angle", tone: "info" };
+  if (agg.category === "Driver")
+    return aoa < 0
+      ? { label: "Hitting down", detail: "ตีลงใส่ไดรเวอร์ — ลองตีขึ้น (+) เพิ่มระยะ", tone: "warn" }
+      : { label: "Hitting up", detail: "ตีขึ้นถูกต้องสำหรับไดรเวอร์", tone: "good" };
+  const smashOff = agg.smash.n ? agg.smash.mean - agg.smashIdeal : NaN;
+  if (aoa >= 0 && Number.isFinite(smashOff) && smashOff < -0.08)
+    return { label: "Hitting behind?", detail: "วงเข้าระดับ/ขึ้น + โดนไม่เต็ม — อาจตีหลังลูก/ปาดบาง", tone: "bad" };
+  if (aoa >= 1)
+    return { label: "Catching up", detail: "ตีขึ้นกับเหล็ก — กดลงโดนลูกก่อนดิน", tone: "warn" };
+  return { label: "Ball-first", detail: "ตีลงโดนลูกก่อนดิน (ดี)", tone: "good" };
+}
+
+/** Two-way miss: share of shots ≥8% of carry offline to each side. */
+export function twoWayMiss(shots: Shot[]): {
+  leftPct: number;
+  rightPct: number;
+  twoWay: boolean;
+  n: number;
+} {
+  let left = 0;
+  let right = 0;
+  let n = 0;
+  for (const s of shots) {
+    const off = s.carry_deviation_distance ?? s.total_deviation_distance;
+    const carry = s.carry_distance;
+    if (off == null || !Number.isFinite(off)) continue;
+    if (carry == null || !Number.isFinite(carry) || carry <= 0) continue;
+    n++;
+    const pct = (off / carry) * 100;
+    if (pct <= -8) left++;
+    else if (pct >= 8) right++;
+  }
+  const leftPct = n ? (left / n) * 100 : 0;
+  const rightPct = n ? (right / n) * 100 : 0;
+  return { leftPct, rightPct, twoWay: leftPct >= 25 && rightPct >= 25, n };
 }
