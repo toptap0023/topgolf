@@ -140,53 +140,97 @@ export function AnalyzeClient({
 
   return (
     <div className="flex flex-col gap-5">
-      <div
-        className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4"
-        role="group"
-        aria-label="Filter by day"
-      >
-        {[
-          { key: "all", label: "All" },
-          ...dates.map((dd) => ({ key: dd, label: dayLabel(dd) })),
-        ].map((opt) => (
-          <button
-            key={opt.key}
-            type="button"
-            onClick={() => setDay(opt.key)}
-            aria-pressed={day === opt.key}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-200 cursor-pointer ${
-              day === opt.key
-                ? "border-accent bg-accent/10 text-accent"
-                : "border-line text-ink-muted hover:text-ink"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
+      {/* Day + club filters pin together under the header so you can switch
+          either while scrolling and compare progress across clubs and days.
+          Day = segmented control, club = pills — distinct shapes so the two
+          rows don't blur into one another. */}
+      <div className="sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-20 -mx-4 flex flex-col gap-2 border-b border-line bg-bg-soft/95 px-4 py-2 backdrop-blur-md">
+        {/* Day filter: the most-recent days as quick boxes + a dropdown for
+            the rest. The day list grows without limit, so old days overflow
+            into the dropdown (which shows + highlights the active one). */}
+        <div
+          className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4"
+          role="group"
+          aria-label="Filter by day"
+        >
+          {[
+            { key: "all", label: "All" },
+            ...dates.slice(0, 4).map((dd) => ({ key: dd, label: dayLabel(dd) })),
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setDay(opt.key)}
+              aria-pressed={day === opt.key}
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-200 cursor-pointer ${
+                day === opt.key
+                  ? "border-accent bg-accent/10 text-accent"
+                  : "border-line text-ink-muted hover:text-ink"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+          {dates.length > 4 &&
+            (() => {
+              const olderActive = dates.slice(4).includes(day);
+              return (
+                <div className="relative shrink-0">
+                  <select
+                    value={olderActive ? day : ""}
+                    onChange={(e) => e.target.value && setDay(e.target.value)}
+                    aria-label="More days"
+                    className={`cursor-pointer appearance-none rounded-full border py-1.5 pl-3 pr-8 text-sm font-medium focus:outline-none ${
+                      olderActive
+                        ? "border-accent bg-accent/10 text-accent"
+                        : "border-line bg-bg-panel text-ink-muted hover:text-ink"
+                    }`}
+                  >
+                    <option value="">More</option>
+                    {dates.slice(4).map((dd) => (
+                      <option key={dd} value={dd}>
+                        {dayLabel(dd)}
+                      </option>
+                    ))}
+                  </select>
+                  <span
+                    className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted"
+                    aria-hidden
+                  >
+                    ▾
+                  </span>
+                </div>
+              );
+            })()}
+        </div>
 
-      <div className="no-scrollbar sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-20 -mx-4 flex gap-2 overflow-x-auto border-b border-line bg-bg-soft/95 px-4 py-2 backdrop-blur-md">
-        {aggs.map((a) => (
-          <button
-            key={a.club}
-            type="button"
-            onClick={() => setClub(a.club)}
-            aria-pressed={a.club === activeClub}
-            className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-200 cursor-pointer ${
-              a.club === activeClub
-                ? "border-accent bg-accent/10 text-accent"
-                : "border-line text-ink-muted hover:text-ink"
-            }`}
-          >
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: CATEGORY_COLOR[a.category] }}
-              aria-hidden
-            />
-            {a.club}
-            <span className="tnum text-xs opacity-60">{a.count}</span>
-          </button>
-        ))}
+        <div
+          className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4"
+          role="group"
+          aria-label="Select club"
+        >
+          {aggs.map((a) => (
+            <button
+              key={a.club}
+              type="button"
+              onClick={() => setClub(a.club)}
+              aria-pressed={a.club === activeClub}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-200 cursor-pointer ${
+                a.club === activeClub
+                  ? "border-accent bg-accent/10 text-accent"
+                  : "border-line text-ink-muted hover:text-ink"
+              }`}
+            >
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: CATEGORY_COLOR[a.category] }}
+                aria-hidden
+              />
+              {a.club}
+              <span className="tnum text-xs opacity-60">{a.count}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
