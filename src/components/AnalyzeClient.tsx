@@ -165,7 +165,7 @@ export function AnalyzeClient({
         ))}
       </div>
 
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+      <div className="no-scrollbar sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-20 -mx-4 flex gap-2 overflow-x-auto border-b border-line bg-bg-soft/95 px-4 py-2 backdrop-blur-md">
         {aggs.map((a) => (
           <button
             key={a.club}

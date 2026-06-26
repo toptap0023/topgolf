@@ -3,17 +3,12 @@ import { getAllShots, getRounds, getSessions } from "@/lib/data";
 import {
   aggregateByClub,
   overallKpis,
-  statOf,
-  bagTips,
   scoringSummary,
 } from "@/lib/stats";
 import {
   fmt,
   fmt1,
   fmt2,
-  pm,
-  pathDir,
-  faceDir,
   formatDate,
   distanceUnitLabel,
   speedUnitLabel,
@@ -25,13 +20,6 @@ import { ClubTable } from "@/components/ClubTable";
 import { UploadIcon, FlagIcon, ChevronRightIcon } from "@/components/icons";
 
 export const revalidate = 60;
-
-const TONE_DOT: Record<string, string> = {
-  good: "bg-good",
-  warn: "bg-warn",
-  bad: "bg-bad",
-  info: "bg-ink-muted",
-};
 
 export default async function DashboardPage() {
   const [shots, rounds, sessions] = await Promise.all([
@@ -70,12 +58,6 @@ export default async function DashboardPage() {
   const best = scores.length ? Math.min(...scores) : null;
   const { hcp, avgScore, avgPutts, avgFairways, avgGir, ideal: scoreIdeal } =
     scoringSummary(rounds);
-
-  const tips = bagTips(aggs);
-  const path = statOf(shots.map((s) => s.club_path));
-  const face = statOf(shots.map((s) => s.club_face));
-  const f2p = statOf(shots.map((s) => s.face_to_path));
-  const attack = statOf(shots.map((s) => s.attack_angle));
 
   const lastPlayed = sessions[0]?.played_on;
 
@@ -143,58 +125,6 @@ export default async function DashboardPage() {
           hint="ball ÷ club speed"
         />
       </div>
-
-      <Card className="p-5">
-        <SectionTitle sub="Your average delivery across every shot — the engine of your ball flight">
-          Swing delivery
-        </SectionTitle>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <StatCard
-            label="Club path"
-            value={Number.isFinite(path.mean) ? `${fmt1(Math.abs(path.mean))}°` : "—"}
-            unit={Number.isFinite(path.mean) ? pathDir(path.mean) : undefined}
-            hint="− = out→in (over the top)"
-          />
-          <StatCard
-            label="Club face"
-            value={Number.isFinite(face.mean) ? `${fmt1(Math.abs(face.mean))}°` : "—"}
-            unit={Number.isFinite(face.mean) ? faceDir(face.mean) : undefined}
-            hint="− = closed (aims left)"
-          />
-          <StatCard
-            label="Face to path"
-            value={pm(f2p.mean)}
-            unit="°"
-            hint="+ fade · − draw"
-          />
-          <StatCard
-            label="Attack angle"
-            value={pm(attack.mean)}
-            unit="°"
-            hint="+ up · − down"
-          />
-        </div>
-      </Card>
-
-      <Card className="p-5">
-        <SectionTitle sub="Data-driven priorities — pure stats, no AI">
-          What to work on
-        </SectionTitle>
-        <ul className="flex flex-col gap-3">
-          {tips.map((t, i) => (
-            <li key={i} className="flex gap-2.5 text-sm">
-              <span
-                className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${TONE_DOT[t.tone] ?? "bg-ink-muted"}`}
-                aria-hidden
-              />
-              <span>
-                <span className="text-ink">{t.text}</span>
-                <span className="mt-1 block text-ink-muted">{t.th}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </Card>
 
       <Card className="p-5">
         <SectionTitle>Distance gapping</SectionTitle>
