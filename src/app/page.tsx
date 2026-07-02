@@ -38,7 +38,17 @@ export default async function DashboardPage() {
       <EmptyState
         icon={<FlagIcon className="h-7 w-7" />}
         title="Welcome to TOPgolf"
-        message="Import a CSV exported from the Garmin Golf app (your Approach R10 range sessions) to see your distances, dispersion, and trends — then track your way from 105 to 85."
+        message={
+          <>
+            Import a CSV exported from the Garmin Golf app (your Approach R10
+            range sessions) to see your distances, dispersion, and trends —
+            then track your way from 105 to 85.
+            <span className="mt-1 block">
+              อัปโหลด CSV จากแอป Garmin Golf เพื่อดูระยะ ความแม่น และพัฒนาการ
+              — ไล่สกอร์จาก 105 สู่ 85
+            </span>
+          </>
+        }
         action={
           <Link
             href="/import"

@@ -213,14 +213,16 @@ export function RoundsClient({ rounds }: { rounds: GolfRound[] }) {
                 <button
                   type="button"
                   aria-label="Delete round"
-                  onClick={() =>
+                  onClick={() => {
+                    // ponytail: native confirm — no modal component for one prompt
+                    if (!confirm(`Delete round ${formatDate(r.played_on)}? / ลบรอบนี้?`)) return;
                     start(async () => {
                       await deleteRound(r.id);
                       router.refresh();
-                    })
-                  }
+                    });
+                  }}
                   disabled={pending}
-                  className="grid h-8 w-8 place-items-center rounded-lg text-ink-muted transition-colors duration-200 hover:bg-bad/10 hover:text-bad cursor-pointer"
+                  className="grid h-11 w-11 place-items-center rounded-lg text-ink-muted transition-colors duration-200 hover:bg-bad/10 hover:text-bad cursor-pointer"
                 >
                   <TrashIcon className="h-4 w-4" />
                 </button>

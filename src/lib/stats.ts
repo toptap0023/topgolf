@@ -239,20 +239,28 @@ export interface Kpis {
 }
 
 export function overallKpis(shots: Shot[]): Kpis {
-  const clubs = new Set(shots.map((s) => s.club ?? "Unknown"));
-  let longest: { value: number; club: string } | null = null;
+  const groups = new Map<string, Shot[]>();
   for (const s of shots) {
+    const key = s.club ?? "Unknown";
+    const g = groups.get(key);
+    if (g) g.push(s);
+    else groups.set(key, [s]);
+  }
+  // Same mishit rule as ClubTable/Analyze so KPI numbers match those pages.
+  const clean = [...groups.values()].flatMap((g) => splitMisses(g).clean);
+  let longest: { value: number; club: string } | null = null;
+  for (const s of clean) {
     if (s.carry_distance != null && Number.isFinite(s.carry_distance)) {
       if (!longest || s.carry_distance > longest.value)
         longest = { value: s.carry_distance, club: s.club ?? "—" };
     }
   }
   return {
-    shots: shots.length,
-    clubs: clubs.size,
+    shots: shots.length, // total logged, incl. mishits — it's a volume metric
+    clubs: groups.size,
     longestCarry: longest,
-    avgSmash: statOf(col(shots, "smash_factor")).mean,
-    avgBall: statOf(col(shots, "ball_speed")).mean,
+    avgSmash: statOf(col(clean, "smash_factor")).mean,
+    avgBall: statOf(col(clean, "ball_speed")).mean,
   };
 }
 

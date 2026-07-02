@@ -16,6 +16,8 @@ import { Badge } from "./ui";
 
 const th = "px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-ink-muted whitespace-nowrap";
 const td = "px-3 py-2 text-sm whitespace-nowrap tnum";
+// Secondary columns hidden on phones so the core numbers fit without scrolling.
+const lg = "hidden md:table-cell";
 
 export function ClubTable({
   aggs,
@@ -42,13 +44,13 @@ export function ClubTable({
             <th className={`${th} text-right`}>Carry ({d})</th>
             <th className={`${th} text-right`}>± σ</th>
             <th className={`${th} text-right`}>Total ({d})</th>
-            <th className={`${th} text-right`}>Ball ({sp})</th>
+            <th className={`${th} text-right ${lg}`}>Ball ({sp})</th>
             <th className={`${th} text-right`}>Smash</th>
-            <th className={`${th} text-right`}>Launch°</th>
-            <th className={`${th} text-right`}>Spin</th>
+            <th className={`${th} text-right ${lg}`}>Launch°</th>
+            <th className={`${th} text-right ${lg}`}>Spin</th>
             <th className={`${th} text-right`}>Side ({d})</th>
-            <th className={th}>Club path</th>
-            <th className={th}>Club face</th>
+            <th className={`${th} ${lg}`}>Club path</th>
+            <th className={`${th} ${lg}`}>Club face</th>
             <th className={th}>Shape</th>
           </tr>
         </thead>
@@ -87,17 +89,17 @@ export function ClubTable({
                   {Number.isFinite(a.carry.std) ? fmt1(a.carry.std) : "—"}
                 </td>
                 <td className={`${td} text-right`}>{fmt(a.total.mean)}</td>
-                <td className={`${td} text-right`}>{fmt1(a.ball.mean)}</td>
+                <td className={`${td} text-right ${lg}`}>{fmt1(a.ball.mean)}</td>
                 <td className={`${td} text-right font-semibold ${smashColor}`}>
                   {fmt2(a.smash.mean)}
                 </td>
-                <td className={`${td} text-right`}>{fmt1(a.launch.mean)}</td>
-                <td className={`${td} text-right`}>{fmt(a.spin.mean)}</td>
+                <td className={`${td} text-right ${lg}`}>{fmt1(a.launch.mean)}</td>
+                <td className={`${td} text-right ${lg}`}>{fmt(a.spin.mean)}</td>
                 <td className={`${td} text-right`}>{lr(a.lateral.mean)}</td>
-                <td className={`${td} text-ink-muted`}>
+                <td className={`${td} text-ink-muted ${lg}`}>
                   {clubPathLabel(a.clubPath.mean)}
                 </td>
-                <td className={`${td} text-ink-muted`}>
+                <td className={`${td} text-ink-muted ${lg}`}>
                   {faceLabel(a.face.mean)}
                 </td>
                 <td className={td}>
