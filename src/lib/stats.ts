@@ -367,76 +367,113 @@ export interface Tendency {
   tone: Tone;
 }
 
-/**
- * Classify a club's typical shot shape for a right-handed golfer using the
- * strongest available signal: spin axis → face-to-path → lateral bias.
- */
+/* Standard launch-monitor 9-window shape taxonomy (right-handed golfer):
+ * start line (launch_direction, +R/−L deg) × curvature (spin_axis deg,
+ * falling back to sidespin ≈100 rpm/deg, then face-to-path).
+ * Tones: back-to-target shapes = good, straight-line offline = warn,
+ * strong curves = bad. */
+const SHAPES = {
+  "Pull Hook": { tone: "bad", en: "Starts left, curves harder left", th: "ออกซ้ายแล้วโค้งซ้ายเพิ่ม" },
+  "Pull Draw": { tone: "warn", en: "Starts left, drifts further left", th: "ออกซ้าย โค้งซ้ายเล็กน้อย" },
+  Pull: { tone: "warn", en: "Straight flight, left of target", th: "ลูกตรงแต่ออกซ้ายทั้งลูก" },
+  "Pull Fade": { tone: "good", en: "Starts left, falls back to target", th: "ออกซ้ายแล้วโค้งกลับเข้าเป้า" },
+  "Pull Slice": { tone: "warn", en: "Starts left, curves well right", th: "ออกซ้ายแล้วโค้งขวาแรง" },
+  Hook: { tone: "bad", en: "Strong right-to-left curve", th: "โค้งซ้ายแรง" },
+  Draw: { tone: "good", en: "Gentle right-to-left", th: "โค้งซ้ายเล็กน้อย (ทรงสวย)" },
+  Straight: { tone: "good", en: "Tight, on-line pattern", th: "ตรงแนวเป้า" },
+  Fade: { tone: "good", en: "Gentle left-to-right", th: "โค้งขวาเล็กน้อย (ทรงสวย)" },
+  Slice: { tone: "bad", en: "Strong left-to-right curve", th: "โค้งขวาแรง" },
+  "Push Draw": { tone: "good", en: "Starts right, draws back to target", th: "ออกขวาแล้วโค้งกลับเข้าเป้า" },
+  Push: { tone: "warn", en: "Straight flight, right of target", th: "ลูกตรงแต่ออกขวาทั้งลูก" },
+  "Push Fade": { tone: "warn", en: "Starts right, drifts further right", th: "ออกขวา โค้งขวาเล็กน้อย" },
+  "Push Slice": { tone: "bad", en: "Starts right, curves harder right", th: "ออกขวาแล้วโค้งขวาเพิ่ม" },
+} as const;
+export type ShapeLabel = keyof typeof SHAPES;
+
+const START_DEG = 2; // |launch dir| beyond this = pull/push
+const CURVE_DEG = 2; // |curve| beyond this = draw/fade
+const STRONG_DEG = 8; // …beyond this = hook/slice
+
+/** Map start line + curvature (deg, +R/−L) onto the 9-window matrix. */
+export function classifyShape(start: number, curve: number): ShapeLabel | null {
+  const s = Number.isFinite(start) ? start : 0;
+  const c = Number.isFinite(curve) ? curve : 0;
+  if (!Number.isFinite(start) && !Number.isFinite(curve)) return null;
+  const sd = s <= -START_DEG ? "L" : s >= START_DEG ? "R" : "C";
+  if (c <= -CURVE_DEG) {
+    const strong = c <= -STRONG_DEG;
+    if (sd === "L") return strong ? "Pull Hook" : "Pull Draw";
+    if (sd === "R") return strong ? "Hook" : "Push Draw";
+    return strong ? "Hook" : "Draw";
+  }
+  if (c >= CURVE_DEG) {
+    const strong = c >= STRONG_DEG;
+    if (sd === "L") return strong ? "Pull Slice" : "Pull Fade";
+    if (sd === "R") return strong ? "Push Slice" : "Push Fade";
+    return strong ? "Slice" : "Fade";
+  }
+  return sd === "L" ? "Pull" : sd === "R" ? "Push" : "Straight";
+}
+
+/** Per-shot curvature in degree-equivalents: spin axis → sidespin → face-to-path. */
+const curveOf = (s: Shot): number =>
+  s.spin_axis ??
+  (s.sidespin != null ? s.sidespin / 100 : (s.face_to_path ?? NaN));
+
+export interface ShapeCount {
+  label: ShapeLabel;
+  n: number;
+  pct: number;
+  tone: Tone;
+}
+
+/** How often each shape shows up for these shots (desc). One club hits many
+ *  shapes — the mix tells more than a single average label. */
+export function shapeBreakdown(shots: Shot[]): ShapeCount[] {
+  const counts = new Map<ShapeLabel, number>();
+  let total = 0;
+  for (const s of shots) {
+    const label = classifyShape(s.launch_direction ?? NaN, curveOf(s));
+    if (!label) continue;
+    total++;
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([label, n]) => ({
+      label,
+      n,
+      pct: (n / total) * 100,
+      tone: SHAPES[label].tone as Tone,
+    }))
+    .sort((a, b) => b.n - a.n);
+}
+
+/** A club's typical shape from its average start line + curvature. */
 export function shotShape(agg: ClubAgg): Tendency {
-  const carryMean = agg.carry.n ? agg.carry.mean : 0;
-  const bias = agg.lateral.n ? agg.lateral.mean : NaN; // +R / -L (yds)
-  const axis = agg.sideSpin.n
-    ? agg.sideSpin.mean
-    : agg.faceToPath.n
-      ? agg.faceToPath.mean
-      : NaN;
+  const start = agg.launchDir.n ? agg.launchDir.mean : NaN;
+  const curve = agg.spinAxis.n
+    ? agg.spinAxis.mean
+    : agg.sideSpin.n
+      ? agg.sideSpin.mean / 100
+      : agg.faceToPath.n
+        ? agg.faceToPath.mean
+        : NaN;
 
-  // magnitude relative to carry: how offline on average
-  const offlinePct =
-    carryMean > 0 && Number.isFinite(bias)
-      ? (Math.abs(bias) / carryMean) * 100
-      : NaN;
+  let label = classifyShape(start, curve);
 
-  if (!Number.isFinite(bias) && !Number.isFinite(axis))
+  // Legacy fallback: only lateral landing bias available (older imports).
+  if (!label && agg.lateral.n && agg.carry.n && agg.carry.mean > 0) {
+    const offlinePct = (agg.lateral.mean / agg.carry.mean) * 100; // +R/−L
+    label = classifyShape(0, offlinePct / 2);
+  }
+  if (!label)
     return {
       label: "—",
       detail: { en: "Not enough data", th: "ข้อมูลยังไม่พอ" },
       tone: "info",
     };
-
-  const dir =
-    Number.isFinite(bias) && Math.abs(bias) >= 0.05
-      ? bias > 0
-        ? "right"
-        : "left"
-      : Number.isFinite(axis) && Math.abs(axis) >= 0.05
-        ? axis > 0
-          ? "right"
-          : "left"
-        : "straight";
-
-  const strong = Number.isFinite(offlinePct) ? offlinePct > 8 : false;
-
-  if (dir === "straight" || (Number.isFinite(offlinePct) && offlinePct < 3))
-    return {
-      label: "Straight",
-      detail: { en: "Tight, on-line pattern", th: "กลุ่มแน่น ตรงแนวเป้า" },
-      tone: "good",
-    };
-
-  if (dir === "right")
-    return strong
-      ? {
-          label: "Slice / Push",
-          detail: { en: "Misses well right", th: "พลาดขวาเยอะ" },
-          tone: "bad",
-        }
-      : {
-          label: "Fade",
-          detail: { en: "Gentle left-to-right", th: "โค้งซ้ายไปขวาเล็กน้อย" },
-          tone: "warn",
-        };
-
-  return strong
-    ? {
-        label: "Hook / Pull",
-        detail: { en: "Misses well left", th: "พลาดซ้ายเยอะ" },
-        tone: "bad",
-      }
-    : {
-        label: "Draw",
-        detail: { en: "Gentle right-to-left", th: "โค้งขวาไปซ้ายเล็กน้อย" },
-        tone: "warn",
-      };
+  const s = SHAPES[label];
+  return { label, detail: { en: s.en, th: s.th }, tone: s.tone as Tone };
 }
 
 /** Short, preliminary "what to adjust" tips for one club — pure logic, no AI. */
