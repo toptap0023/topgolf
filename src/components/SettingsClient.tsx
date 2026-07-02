@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
 import { clearAllData, revealPin } from "@/app/actions";
+import { useGoal } from "@/lib/goal";
 import { Card, SectionTitle } from "./ui";
 import { SunIcon, MoonIcon, GearIcon, TrashIcon } from "./icons";
 
@@ -12,6 +13,70 @@ const THEMES = [
   { key: "light", label: "Light", Icon: SunIcon },
   { key: "system", label: "System", Icon: GearIcon },
 ] as const;
+
+function GoalCard() {
+  const [goal, saveGoal] = useGoal();
+  // Local strings so typing feels natural; commit on blur/save.
+  const [start, setStart] = useState<string | null>(null);
+  const [target, setTarget] = useState<string | null>(null);
+  const s = start ?? String(goal.start);
+  const t = target ?? String(goal.target);
+  const sn = parseInt(s, 10);
+  const tn = parseInt(t, 10);
+  const valid = Number.isFinite(sn) && Number.isFinite(tn) && sn > tn && tn >= 55;
+  const dirty = sn !== goal.start || tn !== goal.target;
+
+  const input =
+    "w-24 rounded-xl border border-line bg-bg-panel px-3 py-2.5 text-center tnum text-ink focus:border-accent";
+
+  return (
+    <Card className="p-5">
+      <SectionTitle sub="เส้นทางสกอร์ของคุณ — จุดเริ่มต้น → เป้าหมาย ใช้กับแถบ Goal และเส้น target ในกราฟ">
+        Goal
+      </SectionTitle>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-ink-muted">Starting score</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            value={s}
+            onChange={(e) => setStart(e.target.value)}
+            className={input}
+          />
+        </label>
+        <span className="pb-3 text-ink-muted">→</span>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium text-ink-muted">Target score</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            value={t}
+            onChange={(e) => setTarget(e.target.value)}
+            className={input}
+          />
+        </label>
+        <button
+          type="button"
+          disabled={!valid || !dirty}
+          onClick={() => {
+            saveGoal({ start: sn, target: tn });
+            setStart(null);
+            setTarget(null);
+          }}
+          className="rounded-xl bg-accent px-5 py-2.5 font-semibold text-bg shadow-glow transition-colors duration-200 hover:bg-accent-dark disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+        >
+          Save
+        </button>
+      </div>
+      {!valid ? (
+        <p className="mt-2 text-sm text-bad" role="alert">
+          Starting score must be higher than target. / สกอร์เริ่มต้นต้องมากกว่าเป้าหมาย
+        </p>
+      ) : null}
+    </Card>
+  );
+}
 
 export function SettingsClient() {
   const router = useRouter();
@@ -26,8 +91,10 @@ export function SettingsClient() {
 
   return (
     <div className="flex flex-col gap-5">
+      <GoalCard />
+
       <Card className="p-5">
-        <SectionTitle sub="Choose how TOPgolf looks">Appearance</SectionTitle>
+        <SectionTitle sub="Choose how TOPgolfer looks">Appearance</SectionTitle>
         <div className="grid grid-cols-3 gap-2">
           {THEMES.map(({ key, label, Icon }) => {
             const active = theme === key;

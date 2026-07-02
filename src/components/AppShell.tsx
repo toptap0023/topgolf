@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
 import {
-  FlagIcon,
   GridIcon,
   ListIcon,
   TargetIcon,
@@ -40,11 +39,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-30 border-b border-line bg-bg-soft/80 backdrop-blur-md pt-safe">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4">
           <Link href="/" className="flex items-center gap-2 font-bold text-ink">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-bg shadow-glow">
-              <FlagIcon className="h-5 w-5" />
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG, no optimization needed */}
+            <img src="/icon.svg" alt="" className="h-8 w-8 rounded-lg shadow-glow" />
             <span className="text-lg tracking-tight">
-              TOP<span className="text-accent">golf</span>
+              TOP<span className="text-accent">golfer</span>
             </span>
           </Link>
 

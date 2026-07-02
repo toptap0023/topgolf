@@ -1,6 +1,6 @@
 import { SettingsClient } from "@/components/SettingsClient";
 
-export const metadata = { title: "Settings · TOPgolf" };
+export const metadata = { title: "Settings · TOPgolfer" };
 
 export default function SettingsPage() {
   return (

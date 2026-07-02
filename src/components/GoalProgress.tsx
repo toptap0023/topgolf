@@ -1,18 +1,18 @@
+"use client";
+
 import { Card } from "./ui";
 import { fmt } from "@/lib/format";
+import { useGoal } from "@/lib/goal";
 
-/** Visualizes progress along the score journey: start (e.g. 105) → target (85). */
+/** Visualizes progress along the score journey: start → target (user-set in Settings). */
 export function GoalProgress({
   current,
-  start = 105,
-  target = 85,
   best,
 }: {
   current: number | null;
-  start?: number;
-  target?: number;
   best?: number | null;
 }) {
+  const [{ start, target }] = useGoal();
   const have = current != null && Number.isFinite(current);
   // 0% at start, 100% at target. Lower score = more progress.
   const pct = have

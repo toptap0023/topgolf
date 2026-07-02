@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "TOPgolf · Practice Analytics",
-    short_name: "TOPgolf",
+    name: "TOPgolfer · Practice Analytics",
+    short_name: "TOPgolfer",
     description:
       "Import Garmin Approach R10 range data and track your game from 105 to 85.",
     start_url: "/",

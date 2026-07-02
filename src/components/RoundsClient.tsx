@@ -8,6 +8,7 @@ import { Card, SectionTitle } from "./ui";
 import { TrendChart } from "./TrendChart";
 import { PlusIcon, TrashIcon } from "./icons";
 import { todayISO, formatDate } from "@/lib/format";
+import { useGoal } from "@/lib/goal";
 
 const numOrNull = (v: string) => {
   const n = parseInt(v, 10);
@@ -16,6 +17,7 @@ const numOrNull = (v: string) => {
 
 export function RoundsClient({ rounds }: { rounds: GolfRound[] }) {
   const router = useRouter();
+  const [{ target }] = useGoal();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(rounds.length === 0);
   const [error, setError] = useState<string | null>(null);
@@ -77,13 +79,13 @@ export function RoundsClient({ rounds }: { rounds: GolfRound[] }) {
     <div className="flex flex-col gap-5">
       {scored.length ? (
         <Card className="p-5">
-          <SectionTitle sub="18-hole scores over time — chasing the 85 line">
+          <SectionTitle sub={`18-hole scores over time — chasing the ${target} line`}>
             Score trend
           </SectionTitle>
           <TrendChart
             series={series}
             yLabel="Score"
-            target={85}
+            target={target}
             lowerBetter
             empty="Log a couple of rounds to see your trend."
           />

@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/ui";
 import { DownloadIcon, UploadIcon } from "@/components/icons";
 
 export const revalidate = 60;
-export const metadata = { title: "Export · TOPgolf" };
+export const metadata = { title: "Export · TOPgolfer" };
 
 export default async function ExportPage() {
   const [shots, sessions, rounds] = await Promise.all([

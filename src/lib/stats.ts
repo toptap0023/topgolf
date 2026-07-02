@@ -560,6 +560,165 @@ export function strikeVerdict(agg: ClubAgg): Tendency {
   return { label: "Ball-first", detail: "ตีลงโดนลูกก่อนดิน (ดี)", tone: "good" };
 }
 
+/* ============ practice tools: caddy · scoring zones · fatigue · benchmark ==
+   Pure helpers consumed by the practice UI. All distance values are in the
+   session's own unit (yds or m) — callers pass the label for display.        */
+
+/** Carry you reach ~75% of the time (mean − 0.5σ) — the number to actually
+ *  club off, not your best-ever carry. */
+export function reliableCarry(agg: ClubAgg): number {
+  return agg.carry.n ? agg.carry.mean - 0.5 * agg.carry.std : NaN;
+}
+
+export interface ClubPick {
+  club: string;
+  category: ClubCategory;
+  reliable: number; // reliable carry
+  mean: number; // average carry
+  diff: number; // reliable − target (− short of target, + past it)
+}
+
+/** "What do I hit from X?" — clubs ranked by how close their reliable carry is
+ *  to the target distance (nearest first). */
+export function clubForDistance(aggs: ClubAgg[], target: number): ClubPick[] {
+  return aggs
+    .map((a) => {
+      const reliable = reliableCarry(a);
+      return {
+        club: a.club,
+        category: a.category,
+        reliable,
+        mean: a.carry.mean,
+        diff: reliable - target,
+      };
+    })
+    .filter((p) => Number.isFinite(p.reliable))
+    .sort((a, b) => Math.abs(a.diff) - Math.abs(b.diff));
+}
+
+/** p-th percentile (0–100) via linear interpolation. */
+export function percentile(values: number[], p: number): number {
+  const xs = values
+    .filter((v) => Number.isFinite(v))
+    .sort((a, b) => a - b);
+  if (!xs.length) return NaN;
+  const i = (p / 100) * (xs.length - 1);
+  const lo = Math.floor(i);
+  const hi = Math.ceil(i);
+  return lo === hi ? xs[lo] : xs[lo] + (xs[hi] - xs[lo]) * (i - lo);
+}
+
+export interface CarryBand {
+  club: string;
+  category: ClubCategory;
+  n: number;
+  p25: number;
+  p50: number; // median
+  p75: number;
+}
+
+/** Per-club carry spread (P25 / median / P75) on clean shots — the working
+ *  range for distance control, and how you spot yardage gaps in the bag. */
+export function carryBands(shots: Shot[]): CarryBand[] {
+  const byClub = new Map<string, Shot[]>();
+  for (const s of shots) {
+    const k = s.club ?? "Unknown";
+    const g = byClub.get(k);
+    if (g) g.push(s);
+    else byClub.set(k, [s]);
+  }
+  const out: CarryBand[] = [];
+  for (const [club, gs] of byClub) {
+    const xs = splitMisses(gs)
+      .clean.map((s) => s.carry_distance)
+      .filter((v): v is number => v != null && Number.isFinite(v));
+    if (!xs.length) continue;
+    out.push({
+      club,
+      category: categoryOf(club),
+      n: xs.length,
+      p25: percentile(xs, 25),
+      p50: percentile(xs, 50),
+      p75: percentile(xs, 75),
+    });
+  }
+  return out.sort((a, b) => clubRank(a.club) - clubRank(b.club));
+}
+
+export interface FatiguePoint {
+  order: number; // 1-based shot order within the session
+  smash: number | null;
+  carryIdx: number | null; // carry as % of that club's session mean (100 = normal)
+}
+
+/** Within one session: does contact/carry fade as you tire? Each shot's carry
+ *  is normalised to its club's session mean so a mixed bag still yields one
+ *  fatigue line; smash is the club-independent contact signal. */
+export function fatigueCurve(shots: Shot[]): FatiguePoint[] {
+  const byClub = new Map<string, Shot[]>();
+  for (const s of shots) {
+    const k = s.club ?? "Unknown";
+    const g = byClub.get(k);
+    if (g) g.push(s);
+    else byClub.set(k, [s]);
+  }
+  const meanByClub = new Map<string, number>();
+  for (const [club, gs] of byClub) {
+    const st = statOf(splitMisses(gs).clean.map((s) => s.carry_distance));
+    if (st.n) meanByClub.set(club, st.mean);
+  }
+  return [...shots]
+    .sort((a, b) => (a.shot_index ?? 0) - (b.shot_index ?? 0))
+    .map((s, i) => {
+      const cm = meanByClub.get(s.club ?? "Unknown");
+      const carryIdx =
+        cm && cm > 0 && s.carry_distance != null && Number.isFinite(s.carry_distance)
+          ? (s.carry_distance / cm) * 100
+          : null;
+      return {
+        order: i + 1,
+        smash:
+          s.smash_factor != null && Number.isFinite(s.smash_factor)
+            ? s.smash_factor
+            : null,
+        carryIdx,
+      };
+    });
+}
+
+export interface ClubBenchmark {
+  b90: number; // typical carry (yds) for someone breaking 90
+  b80: number; // typical carry (yds) for someone breaking 80
+}
+
+/** Per-club carry benchmarks (yards) by skill level — finer than the coarse
+ *  per-category IDEAL so a 4i and 9i aren't judged against the same number.
+ *  Approximate amateur averages; treat as a guide, not a verdict. */
+export const CLUB_BENCHMARK: Record<string, ClubBenchmark> = {
+  Driver: { b90: 200, b80: 245 },
+  "3 Wood": { b90: 190, b80: 225 },
+  "5 Wood": { b90: 180, b80: 210 },
+  "7 Wood": { b90: 170, b80: 200 },
+  "3 Hybrid": { b90: 175, b80: 205 },
+  "4 Hybrid": { b90: 165, b80: 195 },
+  "5 Hybrid": { b90: 158, b80: 185 },
+  "3 Iron": { b90: 170, b80: 200 },
+  "4 Iron": { b90: 160, b80: 190 },
+  "5 Iron": { b90: 150, b80: 178 },
+  "6 Iron": { b90: 140, b80: 165 },
+  "7 Iron": { b90: 130, b80: 152 },
+  "8 Iron": { b90: 120, b80: 140 },
+  "9 Iron": { b90: 110, b80: 128 },
+  PW: { b90: 100, b80: 118 },
+  GW: { b90: 88, b80: 103 },
+  SW: { b90: 72, b80: 88 },
+  LW: { b90: 58, b80: 72 },
+};
+
+export function benchmarkForClub(club: string): ClubBenchmark | null {
+  return CLUB_BENCHMARK[club] ?? null;
+}
+
 /** Two-way miss: share of shots ≥8% of carry offline to each side. */
 export function twoWayMiss(shots: Shot[]): {
   leftPct: number;

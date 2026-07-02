@@ -15,6 +15,7 @@ import {
   strikeVerdict,
   twoWayMiss,
   splitMisses,
+  benchmarkForClub,
 } from "@/lib/stats";
 import { CATEGORY_COLOR } from "@/lib/clubs";
 import {
@@ -78,12 +79,19 @@ export function AnalyzeClient({
   );
   const allShots = useMemo(() => scoped.flatMap((s) => s.shots), [scoped]);
   const aggs = useMemo(() => aggregateByClub(allShots), [allShots]);
+  // Baseline across ALL sessions — powers the "today vs avg" deltas below.
+  const allAggs = useMemo(
+    () => aggregateByClub(sessionShots.flatMap((s) => s.shots)),
+    [sessionShots]
+  );
   const clubs = aggs.map((a) => a.club);
   // The selected club may not exist in the current scope (e.g. not hit that
   // day) — fall back to the first available club instead of showing nothing.
   const activeClub = clubs.includes(club) ? club : clubs[0] ?? "";
 
   const agg = aggs.find((a) => a.club === activeClub);
+  const baseAgg = allAggs.find((a) => a.club === activeClub);
+  const bm = benchmarkForClub(activeClub);
   const clubShots = useMemo(
     () => splitMisses(allShots.filter((s: Shot) => s.club === activeClub)).clean,
     [allShots, activeClub]
@@ -129,6 +137,20 @@ export function AnalyzeClient({
   const contact = contactQuality(agg);
   const tips = clubTips(agg);
   const idl = IDEAL[agg.category];
+
+  // "Today vs baseline" delta — only meaningful when scoped to one day and we
+  // have an all-sessions baseline for the same club. Renders a tiny arrow line.
+  const showDelta = day !== "all" && !!baseAgg;
+  function Delta({ value, goodWhenUp }: { value: number; goodWhenUp: boolean }) {
+    if (!Number.isFinite(value) || Math.abs(value) < 0.05) return null;
+    const up = value > 0;
+    const good = goodWhenUp ? up : !up;
+    return (
+      <span className={`tnum ${good ? "text-good" : "text-bad"}`}>
+        {up ? "▲" : "▼"} {fmt1(Math.abs(value))} vs avg
+      </span>
+    );
+  }
 
   // Coaching insights (derived)
   const strike = strikeVerdict(agg);
@@ -235,6 +257,15 @@ export function AnalyzeClient({
 
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-xl font-bold text-ink">{activeClub}</h2>
+        {bm ? (
+          agg.carry.mean >= bm.b80 ? (
+            <Badge tone="good">break-80 carry</Badge>
+          ) : agg.carry.mean >= bm.b90 ? (
+            <Badge tone="warn">break-90 carry</Badge>
+          ) : (
+            <Badge tone="info">building distance</Badge>
+          )
+        ) : null}
         <Badge tone={shape.tone}>{shape.label}</Badge>
         <Badge tone={contact.tone}>{contact.label} contact</Badge>
         <span className="text-sm text-ink-muted">
@@ -305,9 +336,18 @@ export function AnalyzeClient({
             label="Avg carry"
             value={fmt(agg.carry.mean)}
             unit={d}
-            hint={`±${fmt1(agg.carry.std)} σ`}
+            hint={
+              <>
+                ±{fmt1(agg.carry.std)} σ
+                {showDelta && baseAgg ? (
+                  <span className="mt-0.5 block">
+                    <Delta value={agg.carry.mean - baseAgg.carry.mean} goodWhenUp />
+                  </span>
+                ) : null}
+              </>
+            }
             max={Number.isFinite(agg.carry.max) ? fmt(agg.carry.max) : undefined}
-            ideal={idl?.carry}
+            ideal={bm ? `90→${bm.b90} · 80→${bm.b80}` : idl?.carry}
           />
           <StatCard
             label="Dispersion radius"
@@ -326,7 +366,19 @@ export function AnalyzeClient({
             label="Consistency"
             value={Number.isFinite(agg.consistency) ? fmt1(agg.consistency) : "—"}
             unit="% CV"
-            hint="lower = tighter"
+            hint={
+              <>
+                lower = tighter
+                {showDelta && baseAgg ? (
+                  <span className="mt-0.5 block">
+                    <Delta
+                      value={agg.consistency - baseAgg.consistency}
+                      goodWhenUp={false}
+                    />
+                  </span>
+                ) : null}
+              </>
+            }
             ideal="< 6%"
           />
           <StatCard
@@ -334,9 +386,22 @@ export function AnalyzeClient({
             value={Number.isFinite(agg.missRate) ? fmt(agg.missRate) : "n/a"}
             unit={Number.isFinite(agg.missRate) ? "%" : undefined}
             hint={
-              Number.isFinite(agg.missRate)
-                ? `${agg.missCount} / ${agg.count + agg.missCount} mishit`
-                : "need ≥5 shots"
+              <>
+                {Number.isFinite(agg.missRate)
+                  ? `${agg.missCount} / ${agg.count + agg.missCount} mishit`
+                  : "need ≥5 shots"}
+                {showDelta &&
+                baseAgg &&
+                Number.isFinite(agg.missRate) &&
+                Number.isFinite(baseAgg.missRate) ? (
+                  <span className="mt-0.5 block">
+                    <Delta
+                      value={agg.missRate - baseAgg.missRate}
+                      goodWhenUp={false}
+                    />
+                  </span>
+                ) : null}
+              </>
             }
             ideal="0%"
           />
@@ -350,6 +415,11 @@ export function AnalyzeClient({
           <StatCard
             label="Smash"
             value={fmt2(agg.smash.mean)}
+            hint={
+              showDelta && baseAgg ? (
+                <Delta value={agg.smash.mean - baseAgg.smash.mean} goodWhenUp />
+              ) : undefined
+            }
             max={Number.isFinite(agg.smash.max) ? fmt2(agg.smash.max) : undefined}
             ideal={`~${agg.smashIdeal.toFixed(2)}`}
           />

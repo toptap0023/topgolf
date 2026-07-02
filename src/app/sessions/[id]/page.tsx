@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSession, getShotsForSession } from "@/lib/data";
-import { aggregateByClub, overallKpis, dispersionFor } from "@/lib/stats";
+import { aggregateByClub, overallKpis, dispersionFor, fatigueCurve } from "@/lib/stats";
+import { FatigueChart } from "@/components/FatigueChart";
 import { CATEGORY_COLOR } from "@/lib/clubs";
 import { fmt, fmt2, lr, formatDate, distanceUnitLabel, speedUnitLabel } from "@/lib/format";
 import { Card, SectionTitle, StatCard } from "@/components/ui";
@@ -96,6 +97,8 @@ export default async function SessionDetailPage({
           </div>
         </Card>
       ) : null}
+
+      <FatigueChart data={fatigueCurve(shots)} />
 
       <Card className="p-5">
         <SectionTitle sub={`${shots.length} shots`}>All shots</SectionTitle>

@@ -4,7 +4,10 @@ import {
   aggregateByClub,
   overallKpis,
   scoringSummary,
+  carryBands,
 } from "@/lib/stats";
+import { CaddyCard } from "@/components/CaddyCard";
+import { ScoringZone } from "@/components/ScoringZone";
 import {
   fmt,
   fmt1,
@@ -37,7 +40,7 @@ export default async function DashboardPage() {
     return (
       <EmptyState
         icon={<FlagIcon className="h-7 w-7" />}
-        title="Welcome to TOPgolf"
+        title="Welcome to TOPgolfer"
         message={
           <>
             Import a CSV exported from the Garmin Golf app (your Approach R10
@@ -63,6 +66,7 @@ export default async function DashboardPage() {
   }
 
   const aggs = aggregateByClub(shots);
+  const bands = carryBands(shots);
   const kpis = overallKpis(shots);
   const scores = rounds.filter((r) => r.score != null).map((r) => r.score as number);
   const best = scores.length ? Math.min(...scores) : null;
@@ -136,10 +140,14 @@ export default async function DashboardPage() {
         />
       </div>
 
+      <CaddyCard aggs={aggs} distanceUnit={distanceUnit} />
+
       <Card className="p-5">
         <SectionTitle>Distance gapping</SectionTitle>
         <GapMonitor aggs={aggs} />
       </Card>
+
+      <ScoringZone bands={bands} distanceUnit={distanceUnit} />
 
       {scores.length ? (
         <Card className="p-5">

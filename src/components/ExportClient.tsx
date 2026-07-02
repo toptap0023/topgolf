@@ -127,21 +127,21 @@ export function ExportClient({
           title="Club summary (every club)"
           desc="Per-club averages: carry, dispersion, smash, launch, spin, path, face, shape."
           content={clubCsv}
-          filename={`topgolf-club-summary-${stamp()}.csv`}
+          filename={`topgolfer-club-summary-${stamp()}.csv`}
           disabled={shotCount === 0}
         />
         <ExportRow
           title="All shots"
           desc={`Every shot, one row each — ${shotCount} total.`}
           content={allShotsCsv}
-          filename={`topgolf-shots-${stamp()}.csv`}
+          filename={`topgolfer-shots-${stamp()}.csv`}
           disabled={shotCount === 0}
         />
         <ExportRow
           title="Rounds / scorecards"
           desc={`Your logged 18-hole scores — ${roundCount} round${roundCount === 1 ? "" : "s"}.`}
           content={roundsCsv}
-          filename={`topgolf-rounds-${stamp()}.csv`}
+          filename={`topgolfer-rounds-${stamp()}.csv`}
           disabled={roundCount === 0}
         />
       </Card>

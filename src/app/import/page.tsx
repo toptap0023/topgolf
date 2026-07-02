@@ -1,6 +1,6 @@
 import { ImportClient } from "@/components/ImportClient";
 
-export const metadata = { title: "Import · TOPgolf" };
+export const metadata = { title: "Import · TOPgolfer" };
 
 export default function ImportPage() {
   return (

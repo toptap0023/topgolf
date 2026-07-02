@@ -7,14 +7,14 @@ import { AppShell } from "@/components/AppShell";
 const NO_FOUC = `(function(){try{var t=localStorage.getItem('topgolf:theme')||'dark';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('light',!d);}catch(e){}})();`;
 
 export const metadata: Metadata = {
-  title: "TOPgolf · Practice Analytics",
+  title: "TOPgolfer · Practice Analytics",
   description:
     "Import Garmin Approach R10 range data and track your game from 105 to 85.",
-  applicationName: "TOPgolf",
+  applicationName: "TOPgolfer",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "TOPgolf",
+    title: "TOPgolfer",
   },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
   formatDetection: { telephone: false },
