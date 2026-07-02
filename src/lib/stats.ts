@@ -2,7 +2,7 @@ import type { Shot, ShotMetric, ClubCategory, GolfRound } from "./types";
 import { clubRank, categoryOf } from "./clubs";
 
 /** Rough handicap estimate from logged rounds. We only store score + par (no
- *  course rating / slope), so a true WHS index isn't possible — this uses
+ *  course rating / slope), so a true WHS index isn't possible · this uses
  *  (score − par) as the differential and averages the best few of the last 20
  *  rounds, mirroring the WHS "lowest N" table. Surface it as an *estimate*. */
 export function estimateHandicap(rounds: GolfRound[]): {
@@ -100,7 +100,7 @@ export function statOf(values: (number | null | undefined)[]): Stat {
 
 const col = (shots: Shot[], key: ShotMetric) => shots.map((s) => s[key]);
 
-/** Ideal smash factor (ball speed / club speed) by club type — contact quality. */
+/** Ideal smash factor (ball speed / club speed) by club type · contact quality. */
 export const SMASH_IDEAL: Record<ClubCategory, number> = {
   Driver: 1.49,
   Wood: 1.48,
@@ -115,7 +115,7 @@ export const SMASH_IDEAL: Record<ClubCategory, number> = {
 // stat. Flag shots whose carry is below MISS_THRESHOLD × the club's median carry
 // and drop them from the analysis, reported separately as a miss rate. Median
 // (not mean) so the mishits themselves don't move the cutoff. Skip the check
-// when a club has too few shots — the median would be too noisy to trust.
+// when a club has too few shots · the median would be too noisy to trust.
 // ponytail: fixed % + min-N; expose as constants so they're tunable later.
 export const MISS_THRESHOLD = 0.7;
 export const MIN_SHOTS_FOR_MISS = 5;
@@ -256,7 +256,7 @@ export function overallKpis(shots: Shot[]): Kpis {
     }
   }
   return {
-    shots: shots.length, // total logged, incl. mishits — it's a volume metric
+    shots: shots.length, // total logged, incl. mishits · it's a volume metric
     clubs: groups.size,
     longestCarry: longest,
     avgSmash: statOf(col(clean, "smash_factor")).mean,
@@ -330,7 +330,7 @@ export function metricTrend(
     .filter((p) => p.n > 0 && Number.isFinite(p.value));
 }
 
-/** Per-session dispersion (std dev of carry) — lower is more consistent. */
+/** Per-session dispersion (std dev of carry) · lower is more consistent. */
 export function consistencyTrend(
   data: SessionShots[],
   club?: string
@@ -343,7 +343,7 @@ export function consistencyTrend(
     .filter((p) => p.n > 1 && Number.isFinite(p.value));
 }
 
-/** Simple least-squares slope of y over index — sign tells trend direction. */
+/** Simple least-squares slope of y over index · sign tells trend direction. */
 export function slope(points: { value: number }[]): number {
   const n = points.length;
   if (n < 2) return 0;
@@ -428,7 +428,7 @@ export interface ShapeCount {
 }
 
 /** How often each shape shows up for these shots (desc). One club hits many
- *  shapes — the mix tells more than a single average label. */
+ *  shapes · the mix tells more than a single average label. */
 export function shapeBreakdown(shots: Shot[]): ShapeCount[] {
   const counts = new Map<ShapeLabel, number>();
   let total = 0;
@@ -476,13 +476,13 @@ export function shotShape(agg: ClubAgg): Tendency {
   return { label, detail: { en: s.en, th: s.th }, tone: s.tone as Tone };
 }
 
-/** Short, preliminary "what to adjust" tips for one club — pure logic, no AI. */
+/** Short, preliminary "what to adjust" tips for one club · pure logic, no AI. */
 export function clubTips(agg: ClubAgg): { text: string; th: string }[] {
   const tips: { text: string; th: string }[] = [];
   if (agg.smash.n && agg.smash.mean < agg.smashIdeal - 0.08)
     tips.push({
       text: `Contact is off-centre (smash ${agg.smash.mean.toFixed(2)} vs ideal ~${agg.smashIdeal.toFixed(2)}). Groove a centre strike before chasing distance.`,
-      th: `โดนไม่กลางหน้าไม้ (smash ${agg.smash.mean.toFixed(2)} เทียบ ideal ~${agg.smashIdeal.toFixed(2)}) — ฝึกตีให้โดนกลางก่อนค่อยเพิ่มระยะ`,
+      th: `โดนไม่กลางหน้าไม้ (smash ${agg.smash.mean.toFixed(2)} เทียบ ideal ~${agg.smashIdeal.toFixed(2)}) · ฝึกตีให้โดนกลางก่อนค่อยเพิ่มระยะ`,
     });
   if (agg.face.n && agg.face.mean < -3)
     tips.push({
@@ -497,27 +497,27 @@ export function clubTips(agg: ClubAgg): { text: string; th: string }[] {
   if (agg.clubPath.n && agg.clubPath.mean < -2)
     tips.push({
       text: `Path ${Math.abs(agg.clubPath.mean).toFixed(1)}° out-to-in (over the top). Feel more in-to-out and shallow the downswing.`,
-      th: `วงเข้า-ออก ${Math.abs(agg.clubPath.mean).toFixed(1)}° (over the top) — ฝึกฟีล in-to-out และ shallow ขาลง`,
+      th: `วงเข้า-ออก ${Math.abs(agg.clubPath.mean).toFixed(1)}° (over the top) · ฝึกฟีล in-to-out และ shallow ขาลง`,
     });
   else if (agg.clubPath.n && agg.clubPath.mean > 4)
     tips.push({
       text: `Path ${agg.clubPath.mean.toFixed(1)}° in-to-out (very pushy). Calm the path toward neutral.`,
-      th: `วงออก-เข้า ${agg.clubPath.mean.toFixed(1)}° (in-to-out มากไป) — ปรับ path ให้กลางขึ้น`,
+      th: `วงออก-เข้า ${agg.clubPath.mean.toFixed(1)}° (in-to-out มากไป) · ปรับ path ให้กลางขึ้น`,
     });
   if (Number.isFinite(agg.consistency) && agg.consistency > 15)
     tips.push({
       text: `Carry spread is wide (CV ${agg.consistency.toFixed(0)}%). Build a repeatable strike before adding speed.`,
-      th: `ระยะ carry เหวี่ยงกว้าง (CV ${agg.consistency.toFixed(0)}%) — ทำให้นิ่งก่อนค่อยเพิ่มสปีด`,
+      th: `ระยะ carry เหวี่ยงกว้าง (CV ${agg.consistency.toFixed(0)}%) · ทำให้นิ่งก่อนค่อยเพิ่มสปีด`,
     });
   if (agg.category === "Driver" && agg.launch.n && agg.launch.mean > 17)
     tips.push({
-      text: `Driver launch ${agg.launch.mean.toFixed(0)}° is high — likely scooping/skying. Tee lower, ball forward, centre the strike.`,
-      th: `ไดรเวอร์ launch ${agg.launch.mean.toFixed(0)}° สูงไป — น่าจะงัด/ลอยตั้ง ตั้งทีต่ำลง ลูกไปข้างหน้า เน้นโดนกลาง`,
+      text: `Driver launch ${agg.launch.mean.toFixed(0)}° is high · likely scooping/skying. Tee lower, ball forward, centre the strike.`,
+      th: `ไดรเวอร์ launch ${agg.launch.mean.toFixed(0)}° สูงไป · น่าจะงัด/ลอยตั้ง ตั้งทีต่ำลง ลูกไปข้างหน้า เน้นโดนกลาง`,
     });
   if (tips.length === 0)
     tips.push({
-      text: "Solid and repeatable — keep grooving this one.",
-      th: "ตีได้ดีและสม่ำเสมอ — รักษาความรู้สึกนี้ไว้",
+      text: "Solid and repeatable · keep grooving this one.",
+      th: "ตีได้ดีและสม่ำเสมอ · รักษาความรู้สึกนี้ไว้",
     });
   return tips.slice(0, 3);
 }
@@ -538,14 +538,14 @@ export function bagTips(
 
   if (Number.isFinite(faceAvg) && faceAvg < -3)
     out.push({
-      text: `Clubface is closed across the bag (~${Math.abs(faceAvg).toFixed(0)}°) — a left-miss/hook bias. Fix grip & face awareness first; it's the biggest lever.`,
-      th: `หน้าไม้ปิดเฉลี่ยทั้งถุง (~${Math.abs(faceAvg).toFixed(0)}°) มีแนวโน้มพลาดซ้าย/hook — แก้กริปและการคุมหน้าไม้ก่อน เป็นจุดที่ได้ผลมากสุด`,
+      text: `Clubface is closed across the bag (~${Math.abs(faceAvg).toFixed(0)}°) · a left-miss/hook bias. Fix grip & face awareness first; it's the biggest lever.`,
+      th: `หน้าไม้ปิดเฉลี่ยทั้งถุง (~${Math.abs(faceAvg).toFixed(0)}°) มีแนวโน้มพลาดซ้าย/hook · แก้กริปและการคุมหน้าไม้ก่อน เป็นจุดที่ได้ผลมากสุด`,
       tone: "bad",
     });
   if (Number.isFinite(pathAvg) && pathAvg < -2)
     out.push({
       text: `You swing out-to-in / over the top (~${Math.abs(pathAvg).toFixed(1)}°). Train an in-to-out feel and shallow the club.`,
-      th: `วงสวิงเข้า-ออก (out-to-in / over the top ~${Math.abs(pathAvg).toFixed(1)}°) — ฝึกฟีลลิ่ง in-to-out และ shallow ไม้ลงมา`,
+      th: `วงสวิงเข้า-ออก (out-to-in / over the top ~${Math.abs(pathAvg).toFixed(1)}°) · ฝึกฟีลลิ่ง in-to-out และ shallow ไม้ลงมา`,
       tone: "warn",
     });
 
@@ -555,7 +555,7 @@ export function bagTips(
   if (worst && worst.smash.mean < worst.smashIdeal - 0.08)
     out.push({
       text: `${worst.club} has your weakest contact (smash ${worst.smash.mean.toFixed(2)}). Centre-strike work here pays off most.`,
-      th: `${worst.club} โดนหน้าไม้แย่สุด (smash ${worst.smash.mean.toFixed(2)}) — ฝึกตีให้โดนกลางหน้าไม้ที่ไม้นี้คุ้มสุด`,
+      th: `${worst.club} โดนหน้าไม้แย่สุด (smash ${worst.smash.mean.toFixed(2)}) · ฝึกตีให้โดนกลางหน้าไม้ที่ไม้นี้คุ้มสุด`,
       tone: "bad",
     });
 
@@ -565,7 +565,7 @@ export function bagTips(
   if (loose && loose.consistency > 20)
     out.push({
       text: `${loose.club} is least consistent (CV ${loose.consistency.toFixed(0)}%). Make it reliable or leave it in the bag on course.`,
-      th: `${loose.club} นิ่งน้อยสุด (CV ${loose.consistency.toFixed(0)}%) — ทำให้สม่ำเสมอ หรือเก็บไว้ในถุงตอนออกรอบ`,
+      th: `${loose.club} นิ่งน้อยสุด (CV ${loose.consistency.toFixed(0)}%) · ทำให้สม่ำเสมอ หรือเก็บไว้ในถุงตอนออกรอบ`,
       tone: "warn",
     });
 
@@ -574,8 +574,8 @@ export function bagTips(
     .sort((a, b) => b.smash.mean - b.smashIdeal - (a.smash.mean - a.smashIdeal))[0];
   if (best && best.smash.mean >= best.smashIdeal - 0.03)
     out.push({
-      text: `${best.club} is your most solid club — build your scoring strategy around it.`,
-      th: `${best.club} คือไม้ที่มั่นใจสุด — วางแผนทำสกอร์โดยอิงไม้นี้`,
+      text: `${best.club} is your most solid club · build your scoring strategy around it.`,
+      th: `${best.club} คือไม้ที่มั่นใจสุด · วางแผนทำสกอร์โดยอิงไม้นี้`,
       tone: "good",
     });
 
@@ -619,7 +619,7 @@ export function contactQuality(agg: ClubAgg): Tendency {
 /**
  * Strike verdict from attack angle + smash. Driver wants +AoA (hit up);
  * everything off the turf wants ≤0 (ball-first). Flags "ตีหลังลูก" when the
- * club comes in level/up AND smash is down — a fat/thin signature.
+ * club comes in level/up AND smash is down · a fat/thin signature.
  */
 export function strikeVerdict(agg: ClubAgg): Tendency {
   const aoa = agg.attackAngle.n ? agg.attackAngle.mean : NaN;
@@ -634,15 +634,15 @@ export function strikeVerdict(agg: ClubAgg): Tendency {
       ? {
           label: "Hitting down",
           detail: {
-            en: "Hitting down with driver — try hitting up (+) for more distance",
-            th: "ตีลงใส่ไดรเวอร์ — ลองตีขึ้น (+) เพิ่มระยะ",
+            en: "Hitting down with driver · try hitting up (+) for more distance",
+            th: "ตีลงใส่ไดรเวอร์ · ลองตีขึ้น (+) เพิ่มระยะ",
           },
           tone: "warn",
         }
       : {
           label: "Hitting up",
           detail: {
-            en: "Hitting up — correct for driver",
+            en: "Hitting up · correct for driver",
             th: "ตีขึ้นถูกต้องสำหรับไดรเวอร์",
           },
           tone: "good",
@@ -652,8 +652,8 @@ export function strikeVerdict(agg: ClubAgg): Tendency {
     return {
       label: "Hitting behind?",
       detail: {
-        en: "Level/upward strike + weak contact — likely hitting behind the ball or thinning it",
-        th: "วงเข้าระดับ/ขึ้น + โดนไม่เต็ม — อาจตีหลังลูก/ปาดบาง",
+        en: "Level/upward strike + weak contact · likely hitting behind the ball or thinning it",
+        th: "วงเข้าระดับ/ขึ้น + โดนไม่เต็ม · อาจตีหลังลูก/ปาดบาง",
       },
       tone: "bad",
     };
@@ -661,8 +661,8 @@ export function strikeVerdict(agg: ClubAgg): Tendency {
     return {
       label: "Catching up",
       detail: {
-        en: "Hitting up with irons — strike down, ball first",
-        th: "ตีขึ้นกับเหล็ก — กดลงโดนลูกก่อนดิน",
+        en: "Hitting up with irons · strike down, ball first",
+        th: "ตีขึ้นกับเหล็ก · กดลงโดนลูกก่อนดิน",
       },
       tone: "warn",
     };
@@ -675,9 +675,9 @@ export function strikeVerdict(agg: ClubAgg): Tendency {
 
 /* ============ practice tools: caddy · scoring zones · fatigue · benchmark ==
    Pure helpers consumed by the practice UI. All distance values are in the
-   session's own unit (yds or m) — callers pass the label for display.        */
+   session's own unit (yds or m) · callers pass the label for display.        */
 
-/** Carry you reach ~75% of the time (mean − 0.5σ) — the number to actually
+/** Carry you reach ~75% of the time (mean − 0.5σ) · the number to actually
  *  club off, not your best-ever carry. */
 export function reliableCarry(agg: ClubAgg): number {
   return agg.carry.n ? agg.carry.mean - 0.5 * agg.carry.std : NaN;
@@ -691,7 +691,7 @@ export interface ClubPick {
   diff: number; // reliable − target (− short of target, + past it)
 }
 
-/** "What do I hit from X?" — clubs ranked by how close their reliable carry is
+/** "What do I hit from X?" · clubs ranked by how close their reliable carry is
  *  to the target distance (nearest first). */
 export function clubForDistance(aggs: ClubAgg[], target: number): ClubPick[] {
   return aggs
@@ -730,7 +730,7 @@ export interface CarryBand {
   p75: number;
 }
 
-/** Per-club carry spread (P25 / median / P75) on clean shots — the working
+/** Per-club carry spread (P25 / median / P75) on clean shots · the working
  *  range for distance control, and how you spot yardage gaps in the bag. */
 export function carryBands(shots: Shot[]): CarryBand[] {
   const byClub = new Map<string, Shot[]>();
@@ -804,7 +804,7 @@ export interface ClubBenchmark {
   b80: number; // typical carry (yds) for someone breaking 80
 }
 
-/** Per-club carry benchmarks (yards) by skill level — finer than the coarse
+/** Per-club carry benchmarks (yards) by skill level · finer than the coarse
  *  per-category IDEAL so a 4i and 9i aren't judged against the same number.
  *  Approximate amateur averages; treat as a guide, not a verdict. */
 export const CLUB_BENCHMARK: Record<string, ClubBenchmark> = {

@@ -89,7 +89,7 @@ export function clubTableCsv(
   return [head, ...rows].join("\n");
 }
 
-/** Rounds / scorecards as CSV — for sending to an AI or a spreadsheet. */
+/** Rounds / scorecards as CSV · for sending to an AI or a spreadsheet. */
 export function roundsToCsv(rounds: GolfRound[]): string {
   const head = "Date,Course,Score,Par,Holes,Putts,Fairways Hit,GIR,Notes";
   const lines = rounds.map((r) =>
@@ -151,7 +151,7 @@ Below is a summary of my Garmin Approach R10 launch-monitor practice data. Dista
 Headline numbers: ${kpis.shots} shots across ${kpis.clubs} clubs; longest carry ${
     kpis.longestCarry ? `${Math.round(kpis.longestCarry.value)} ${d} (${kpis.longestCarry.club})` : "n/a"
   }; average smash factor ${Number.isFinite(kpis.avgSmash) ? kpis.avgSmash.toFixed(2) : "n/a"}.
-${recentScores ? `Recent rounds — ${recentScores}.` : ""}
+${recentScores ? `Recent rounds · ${recentScores}.` : ""}
 
 Per-club data:
 ${tableHeader}
@@ -159,9 +159,9 @@ ${tableRows}
 
 Please analyze and give me:
 1. The 3 biggest weaknesses holding my score back (cite the numbers).
-2. Distance gapping problems — clubs that overlap or leave gaps.
-3. Consistency/dispersion issues — which clubs are least reliable and why.
-4. Contact quality — where my smash factor lags the ideal for that club.
+2. Distance gapping problems · clubs that overlap or leave gaps.
+3. Consistency/dispersion issues · which clubs are least reliable and why.
+4. Contact quality · where my smash factor lags the ideal for that club.
 5. Shot-shape tendencies (slice/hook) and how to neutralize them.
 6. A specific, prioritized 4-week practice plan with drills and measurable targets to move me toward ${target}.
 

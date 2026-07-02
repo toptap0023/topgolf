@@ -73,7 +73,7 @@ export interface GolfRound {
   created_at: string;
 }
 
-/** Numeric column keys on Shot — used generically by the stats + chart layers. */
+/** Numeric column keys on Shot · used generically by the stats + chart layers. */
 export type ShotMetric =
   | "ball_speed"
   | "club_speed"

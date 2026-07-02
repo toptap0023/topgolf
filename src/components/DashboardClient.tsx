@@ -31,8 +31,8 @@ import { useT, type Dict } from "@/lib/i18n";
 const L = {
   welcomeTitle: { en: "Welcome to TOPgolfer", th: "ยินดีต้อนรับสู่ TOPgolfer" },
   welcomeMsg: {
-    en: "Import a CSV exported from the Garmin Golf app (your Approach R10 range sessions) to see your distances, dispersion, and trends — then track your way from 105 to 85.",
-    th: "อัปโหลด CSV จากแอป Garmin Golf เพื่อดูระยะ ความแม่น และพัฒนาการ — ไล่สกอร์จาก 105 สู่ 85",
+    en: "Import a CSV exported from the Garmin Golf app (your Approach R10 range sessions) to see your distances, dispersion, and trends · then track your way from 105 to 85.",
+    th: "อัปโหลด CSV จากแอป Garmin Golf เพื่อดูระยะ ความแม่น และพัฒนาการ · ไล่สกอร์จาก 105 สู่ 85",
   },
   importCsv: { en: "Import Garmin CSV", th: "อัปโหลด Garmin CSV" },
   dashboard: { en: "Dashboard", th: "แดชบอร์ด" },

@@ -141,7 +141,7 @@ export function parseRoundsCsv(text: string): RoundParseResult {
 /** Prompt to paste into Gemini/any AI alongside a scorecard photo. */
 export function buildScorecardPrompt(): string {
   return `อ่านรูปสกอร์การ์ดกอล์ฟใบนี้ แล้วตอบกลับเป็น "CSV ดิบ" เท่านั้น ห้ามมีคำอธิบาย ห้ามใส่ \`\`\` หรือ markdown.
-(Read this golf scorecard photo and reply with RAW CSV only — no explanation, no markdown, no code fences.)
+(Read this golf scorecard photo and reply with RAW CSV only · no explanation, no markdown, no code fences.)
 
 First line must be exactly this header:
 date,course,score,putts,fairways,gir

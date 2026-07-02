@@ -12,7 +12,7 @@ import { Card, SectionTitle } from "./ui";
 const QUICK_PICKS = [100, 120, 140, 160, 180];
 
 const L = {
-  title: { en: "Caddy — club by distance", th: "แคดดี้ — เลือกไม้ตามระยะ" },
+  title: { en: "Caddy · club by distance", th: "แคดดี้ · เลือกไม้ตามระยะ" },
   sub: { en: "Enter a distance, get the right club", th: "ใส่ระยะแล้วเลือกไม้ให้" },
   empty: {
     en: "Import range shots to use the caddy.",

@@ -56,7 +56,7 @@ export async function getRounds(): Promise<GolfRound[]> {
   return (data ?? []) as GolfRound[];
 }
 
-/** Sessions (chronological asc) each with their shots — for trend charts. */
+/** Sessions (chronological asc) each with their shots · for trend charts. */
 export async function getSessionShots(): Promise<SessionShots[]> {
   const supabase = createClient();
   const [sessionsRes, shotsRes] = await Promise.all([

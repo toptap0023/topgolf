@@ -10,7 +10,7 @@ import { Card, SectionTitle } from "./ui";
 const L = {
   title: { en: "Scoring zones (carry)", th: "โซนทำสกอร์ (carry)" },
   sub: {
-    en: "Carry P25–P75 per club — mind the gaps",
+    en: "Carry P25–P75 per club · mind the gaps",
     th: "ช่วงระยะจริงต่อไม้ ดูช่องว่าง",
   },
   empty: { en: "No carry data yet.", th: "ยังไม่มีข้อมูลระยะ" },
@@ -24,7 +24,7 @@ const L = {
 } satisfies Dict;
 
 /** Carries under this many units are "scoring zone" clubs (wedges / short
- *  irons) where amateurs bleed strokes — highlight those rows. */
+ *  irons) where amateurs bleed strokes · highlight those rows. */
 const SCORING_MAX = 130;
 /** A jump between neighbouring clubs' medians counts as a gap when it is both
  *  unusually large vs the typical gap AND meaningful in absolute terms. */
@@ -34,7 +34,7 @@ const GAP_MIN = 20;
 /**
  * Yardage ladder: each club's carry working-range (P25→P75) drawn as a CSS bar
  * on one shared distance scale, with a median marker and gap callouts. Pure
- * server render from `carryBands()` output — no client JS, no chart lib.
+ * server render from `carryBands()` output · no client JS, no chart lib.
  */
 export function ScoringZone({
   bands,

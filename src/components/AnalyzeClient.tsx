@@ -38,7 +38,7 @@ import { useT, useLang, type Dict } from "@/lib/i18n";
 import { useGoal } from "@/lib/goal";
 
 // Golf jargon (club names, StatCard labels, shot shapes, units) is never
-// translated — only sentences/hints get an en/th pair.
+// translated · only sentences/hints get an en/th pair.
 const L = {
   noData: { en: "No data to analyze.", th: "ไม่มีข้อมูลให้วิเคราะห์" },
   shapeMix: { en: "Shape mix", th: "สัดส่วนทรงลูก" },
@@ -53,11 +53,11 @@ const L = {
   belowLevel: { en: "below HCP level", th: "ต่ำกว่าระดับ HCP" },
   coachingTitle: { en: "Coaching insights", th: "คำแนะนำจากโค้ช" },
   coachingSub: {
-    en: "What to fix first — start here",
-    th: "สิ่งที่ควรแก้ก่อน — ดูตรงนี้ก่อนเลย",
+    en: "What to fix first · start here",
+    th: "สิ่งที่ควรแก้ก่อน · ดูตรงนี้ก่อนเลย",
   },
   reliableCarryHint: {
-    en: "Carry you reach ~70% of the time — use this to pick clubs",
+    en: "Carry you reach ~70% of the time · use this to pick clubs",
     th: "ระยะที่ตีถึง ~70% ใช้เลือกไม้จริง",
   },
   twoWayBad: { en: "two-way miss", th: "พลาด 2 ทาง" },
@@ -69,8 +69,8 @@ const L = {
     th: "พลาด ≥8% ของ carry ทั้งซ้ายและขวา = หน้าไม้ไม่นิ่ง",
   },
   smashEffHint: {
-    en: "vs ideal smash — how flush your contact is",
-    th: "เทียบ smash ideal — โดนเต็มหน้าไม้แค่ไหน",
+    en: "vs ideal smash · how flush your contact is",
+    th: "เทียบ smash ideal · โดนเต็มหน้าไม้แค่ไหน",
   },
   keyTitle: { en: "Key numbers", th: "ตัวเลขหลัก" },
   keySub: {
@@ -78,8 +78,8 @@ const L = {
     th: "ตัวเลขหลักที่ใช้ตัดสินใจ",
   },
   dispRadiusHint: {
-    en: "±1σ scatter radius — smaller = more accurate",
-    th: "รัศมีวงกระจาย ±1σ — เล็ก = แม่น",
+    en: "±1σ scatter radius · smaller = more accurate",
+    th: "รัศมีวงกระจาย ±1σ · เล็ก = แม่น",
   },
   spread: { en: "spread", th: "ช่วงกระจาย" },
   lowerTighter: { en: "lower = tighter", th: "ยิ่งต่ำ = ยิ่งนิ่ง" },
@@ -88,8 +88,8 @@ const L = {
   vsAvg: { en: "vs avg", th: "เทียบค่าเฉลี่ย" },
   deliveryTitle: { en: "Delivery", th: "จังหวะปะทะ (Delivery)" },
   deliverySub: {
-    en: "Face & path at impact — what causes your ball flight",
-    th: "หน้าไม้/วงสวิงตอนปะทะ — สาเหตุของ ball flight",
+    en: "Face & path at impact · what causes your ball flight",
+    th: "หน้าไม้/วงสวิงตอนปะทะ · สาเหตุของ ball flight",
   },
   pathHint: {
     en: "R = in→out · L = out→in",
@@ -103,12 +103,12 @@ const L = {
   launchTitle: { en: "Launch & spin", th: "Launch & spin" },
   launchSub: { en: "Launch angle + spin", th: "มุมขึ้น + สปิน" },
   sidespinHint: {
-    en: "+R / −L — which way the ball curves",
-    th: "+R / −L — ทิศโค้งของลูก",
+    en: "+R / −L · which way the ball curves",
+    th: "+R / −L · ทิศโค้งของลูก",
   },
   spinAxisHint: {
-    en: "Spin axis tilt +R / −L — which way the ball curves",
-    th: "แกนสปินเอียง +R / −L — ทิศโค้งของลูก",
+    en: "Spin axis tilt +R / −L · which way the ball curves",
+    th: "แกนสปินเอียง +R / −L · ทิศโค้งของลูก",
   },
   apexHint: { en: "Peak ball height", th: "ความสูงสูงสุดของลูก" },
   speedTitle: { en: "Speed", th: "ความเร็ว" },
@@ -127,8 +127,8 @@ const L = {
   },
   sideTrendTitle: { en: "Side bias trend", th: "เทรนด์ Side bias" },
   sideTrendSub: {
-    en: "+ right · − left (vs the 0 line) — which side you miss more",
-    th: "+ ขวา · − ซ้าย (เทียบเส้น 0) — พลาดทางไหนบ่อยกว่า",
+    en: "+ right · − left (vs the 0 line) · which side you miss more",
+    th: "+ ขวา · − ซ้าย (เทียบเส้น 0) · พลาดทางไหนบ่อยกว่า",
   },
   noTrendData: {
     en: "Not enough data in this range.",
@@ -139,7 +139,7 @@ const L = {
   widening: { en: "widening ↗", th: "กว้างขึ้น ↗" },
 } satisfies Dict;
 
-// Rough "good amateur" targets per club type — shown under each stat for comparison.
+// Rough "good amateur" targets per club type · shown under each stat for comparison.
 const IDEAL: Record<
   string,
   { launch: string; spin: string; carry: string; total: string; ball: string }
@@ -179,7 +179,7 @@ export function AnalyzeClient({
   const [club, setClub] = useState<string>("");
   const [range, setRange] = useState(12); // trend window in months
 
-  // Dates that actually have sessions, newest first — drives the day pills.
+  // Dates that actually have sessions, newest first · drives the day pills.
   const dates = useMemo(() => {
     const set = new Set(sessionShots.map((s) => s.date));
     return [...set].sort((a, b) => (a < b ? 1 : -1));
@@ -192,14 +192,14 @@ export function AnalyzeClient({
   );
   const allShots = useMemo(() => scoped.flatMap((s) => s.shots), [scoped]);
   const aggs = useMemo(() => aggregateByClub(allShots), [allShots]);
-  // Baseline across ALL sessions — powers the "today vs avg" deltas below.
+  // Baseline across ALL sessions · powers the "today vs avg" deltas below.
   const allAggs = useMemo(
     () => aggregateByClub(sessionShots.flatMap((s) => s.shots)),
     [sessionShots]
   );
   const clubs = aggs.map((a) => a.club);
   // The selected club may not exist in the current scope (e.g. not hit that
-  // day) — fall back to the first available club instead of showing nothing.
+  // day) · fall back to the first available club instead of showing nothing.
   const activeClub = clubs.includes(club) ? club : clubs[0] ?? "";
 
   const agg = aggs.find((a) => a.club === activeClub);
@@ -252,7 +252,7 @@ export function AnalyzeClient({
   const tips = clubTips(agg);
   const idl = IDEAL[agg.category];
 
-  // "Today vs baseline" delta — only meaningful when scoped to one day and we
+  // "Today vs baseline" delta · only meaningful when scoped to one day and we
   // have an all-sessions baseline for the same club. Renders a tiny arrow line.
   const showDelta = day !== "all" && !!baseAgg;
   // Arrow shows quality, not numeric direction: better than average = ▲ green,
@@ -279,7 +279,7 @@ export function AnalyzeClient({
     <div className="flex flex-col gap-5">
       {/* Day + club filters pin together under the header so you can switch
           either while scrolling and compare progress across clubs and days.
-          Day = segmented control, club = pills — distinct shapes so the two
+          Day = segmented control, club = pills · distinct shapes so the two
           rows don't blur into one another. */}
       <div className="sticky top-[calc(env(safe-area-inset-top)+3.5rem)] z-20 -mx-4 flex flex-col gap-2 border-b border-line bg-bg-soft/95 px-4 py-2 backdrop-blur-md">
         {/* Day filter: the most-recent days as quick boxes + a dropdown for
@@ -389,7 +389,7 @@ export function AnalyzeClient({
         </span>
       </div>
 
-      {/* One club hits many shapes — the mix tells more than the single badge. */}
+      {/* One club hits many shapes · the mix tells more than the single badge. */}
       {shapes.length > 1 ? (
         <div className="-mt-3">
           <p className="text-sm text-ink-muted">
@@ -412,7 +412,7 @@ export function AnalyzeClient({
               </span>
             ))}
           </p>
-          {/* Shape names stay EN jargon — Thai mode glosses them underneath. */}
+          {/* Shape names stay EN jargon · Thai mode glosses them underneath. */}
           {lang === "th" ? (
             <p className="mt-0.5 text-xs text-ink-muted">
               {shapes
@@ -424,7 +424,7 @@ export function AnalyzeClient({
         </div>
       ) : null}
 
-      {/* 1 — Coaching insights (most actionable first) */}
+      {/* 1 · Coaching insights (most actionable first) */}
       <div>
         <SectionTitle sub={t("coachingSub")}>{t("coachingTitle")}</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -480,7 +480,7 @@ export function AnalyzeClient({
         </div>
       </div>
 
-      {/* 2 — Key numbers */}
+      {/* 2 · Key numbers */}
       <div>
         <SectionTitle sub={t("keySub")}>{t("keyTitle")}</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -584,7 +584,7 @@ export function AnalyzeClient({
         </div>
       </div>
 
-      {/* 3 — Delivery */}
+      {/* 3 · Delivery */}
       <div>
         <SectionTitle sub={t("deliverySub")}>{t("deliveryTitle")}</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -625,7 +625,7 @@ export function AnalyzeClient({
         </div>
       </div>
 
-      {/* 4 — Launch & spin */}
+      {/* 4 · Launch & spin */}
       <div>
         <SectionTitle sub={t("launchSub")}>{t("launchTitle")}</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -671,7 +671,7 @@ export function AnalyzeClient({
         </div>
       </div>
 
-      {/* 5 — Speed */}
+      {/* 5 · Speed */}
       <div>
         <SectionTitle sub={t("speedSub")}>{t("speedTitle")}</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -704,7 +704,7 @@ export function AnalyzeClient({
           </div>
         </Card>
 
-        {/* Trends need multiple sessions — hidden when focused on one day. */}
+        {/* Trends need multiple sessions · hidden when focused on one day. */}
         {day === "all" && (
         <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between">

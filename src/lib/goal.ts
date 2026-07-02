@@ -38,7 +38,7 @@ export function useGoal(): [Goal, (g: Goal) => void] {
     try {
       localStorage.setItem(KEY, JSON.stringify(g));
     } catch {
-      /* private mode — keep in-memory value */
+      /* private mode · keep in-memory value */
     }
   };
   return [goal, save];

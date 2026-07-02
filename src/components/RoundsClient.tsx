@@ -14,8 +14,8 @@ import { useT, type Dict } from "@/lib/i18n";
 const L = {
   scoreTrend: { en: "Score trend", th: "แนวโน้มสกอร์" },
   scoreTrendSub: {
-    en: "18-hole scores over time — chasing the {target} line",
-    th: "สกอร์ 18 หลุมตามเวลา — ไล่ตามเส้นเป้า {target}",
+    en: "18-hole scores over time · chasing the {target} line",
+    th: "สกอร์ 18 หลุมตามเวลา · ไล่ตามเส้นเป้า {target}",
   },
   trendEmpty: {
     en: "Log a couple of rounds to see your trend.",
@@ -242,7 +242,7 @@ export function RoundsClient({ rounds }: { rounds: GolfRound[] }) {
                   type="button"
                   aria-label={t("deleteRound")}
                   onClick={() => {
-                    // ponytail: native confirm — no modal component for one prompt
+                    // ponytail: native confirm · no modal component for one prompt
                     if (
                       !confirm(
                         t("deleteConfirm").replace(

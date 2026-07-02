@@ -10,7 +10,7 @@ import {
 
 /** App language. Stored per-device (localStorage) like theme/goal; default
  *  English. Golf terms (club names, units, Carry/Smash/Spin headers) are
- *  intentionally never translated — Thai golfers use them as-is. */
+ *  intentionally never translated · Thai golfers use them as-is. */
 export type Lang = "en" | "th";
 
 const KEY = "topgolf:lang";
@@ -32,7 +32,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(KEY, l);
     } catch {
-      /* private mode — keep in-memory value */
+      /* private mode · keep in-memory value */
     }
   };
   return <LangCtx.Provider value={{ lang, setLang }}>{children}</LangCtx.Provider>;

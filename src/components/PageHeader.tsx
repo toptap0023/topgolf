@@ -14,7 +14,7 @@ const L = {
   settings: { en: "Settings", th: "ตั้งค่า" },
 } satisfies Dict;
 
-/** Translated h1 (+ optional sub) for server pages — page id keys into L. */
+/** Translated h1 (+ optional sub) for server pages · page id keys into L. */
 export function PageHeader({ page }: { page: "analyze" | "rounds" | "import" | "export" | "settings" }) {
   const t = useT(L);
   return (

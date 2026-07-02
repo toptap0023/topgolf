@@ -245,7 +245,7 @@ function parseDate(s: string): string | null {
   return null;
 }
 
-/** A row like ",,,,,[mph],[deg],[Yards],…" — the units line Garmin puts under
+/** A row like ",,,,,[mph],[deg],[Yards],…" · the units line Garmin puts under
  *  the header. Detected so it is never imported as a shot. */
 const isUnitsRow = (cells: string[]) =>
   cells.filter((c) => /^\s*\[[^\]]*\]\s*$/.test(c)).length >= 3;
@@ -353,7 +353,7 @@ export function parseGarminCsv(text: string): ParseResult {
   );
 
   // Garmin puts a units row (e.g. "[mph],[deg],[Yards]") directly under the
-  // header — use it to detect units, and skip it as a shot below.
+  // header · use it to detect units, and skip it as a shot below.
   const unitsRow =
     rows[headerIdx + 1] && isUnitsRow(rows[headerIdx + 1])
       ? rows[headerIdx + 1]

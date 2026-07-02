@@ -12,8 +12,8 @@ import { SunIcon, MoonIcon, GearIcon, TrashIcon } from "./icons";
 const L = {
   goal: { en: "Goal", th: "เป้าหมาย" },
   goalSub: {
-    en: "Your score journey — start → target. Drives the Goal bar and the target line in charts.",
-    th: "เส้นทางสกอร์ของคุณ — จุดเริ่มต้น → เป้าหมาย ใช้กับแถบ Goal และเส้น target ในกราฟ",
+    en: "Your score journey · start → target. Drives the Goal bar and the target line in charts.",
+    th: "เส้นทางสกอร์ของคุณ · จุดเริ่มต้น → เป้าหมาย ใช้กับแถบ Goal และเส้น target ในกราฟ",
   },
   startScore: { en: "Starting score", th: "สกอร์เริ่มต้น" },
   targetScore: { en: "Target score", th: "สกอร์เป้าหมาย" },
@@ -32,8 +32,8 @@ const L = {
   system: { en: "System", th: "ตามระบบ" },
   privacy: { en: "Privacy", th: "ความเป็นส่วนตัว" },
   privacyBody1: {
-    en: "Public by design — anyone with the link can view or upload data. No login page. Only ",
-    th: "เปิดสาธารณะ — ใครมีลิงก์ก็เข้าดู / อัปข้อมูลได้ ไม่มีหน้า login. มีแค่การ ",
+    en: "Public by design · anyone with the link can view or upload data. No login page. Only ",
+    th: "เปิดสาธารณะ · ใครมีลิงก์ก็เข้าดู / อัปข้อมูลได้ ไม่มีหน้า login. มีแค่การ ",
   },
   privacyBodyBold: {
     en: "Clear all data",

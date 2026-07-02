@@ -9,7 +9,7 @@ import { Card, SectionTitle } from "./ui";
 const L = {
   title: { en: "Fatigue", th: "ความล้า" },
   sub: {
-    en: "Carry vs shot order — are you fading?",
+    en: "Carry vs shot order · are you fading?",
     th: "ระยะเทียบลำดับช็อต",
   },
   empty: {
@@ -23,7 +23,7 @@ const L = {
   legendX: { en: "shot order →", th: "ลำดับช็อต →" },
   fadedPre: { en: "Carry faded", th: "ระยะช่วงท้ายตก" },
   fadedPost: {
-    en: "late in the session — consider fewer balls or breaks.",
+    en: "late in the session · consider fewer balls or breaks.",
     th: "ลองตีน้อยลงหรือพัก",
   },
   steady: {
