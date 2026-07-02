@@ -48,7 +48,11 @@ const L = {
   clubsHit: { en: "Clubs hit", th: "ไม้ที่ใช้" },
   longestCarry: { en: "Longest carry", th: "Carry ไกลสุด" },
   avgSmash: { en: "Avg smash", th: "Smash เฉลี่ย" },
-  distanceGapping: { en: "Distance gapping", th: "ระยะห่างระหว่างไม้" },
+  distanceGapping: { en: "Distance gapping (carry)", th: "ระยะห่างระหว่างไม้ (carry)" },
+  gappingSub: {
+    en: "Solid bar = carry · faded = total",
+    th: "แท่งเข้ม = carry · แท่งจาง = total",
+  },
   scores: { en: "Scores", th: "สกอร์" },
   recentRounds: { en: "Most recent rounds", th: "รอบล่าสุด" },
   allRounds: { en: "All rounds", th: "รอบทั้งหมด" },
@@ -248,7 +252,7 @@ export function DashboardClient({
       <CaddyCard aggs={aggs} distanceUnit={distanceUnit} />
 
       <Card className="p-5">
-        <SectionTitle>{t("distanceGapping")}</SectionTitle>
+        <SectionTitle sub={t("gappingSub")}>{t("distanceGapping")}</SectionTitle>
         <GapMonitor aggs={aggs} />
       </Card>
 

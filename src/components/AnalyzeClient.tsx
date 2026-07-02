@@ -482,7 +482,9 @@ export function AnalyzeClient({
             unit={d}
             hint={
               <>
-                ±{fmt1(agg.carry.std)} σ
+                {lang === "th"
+                  ? `ช็อตแกว่ง ±${fmt1(agg.carry.std)} ${d}`
+                  : `±${fmt1(agg.carry.std)} ${d} shot-to-shot`}
                 {showDelta && baseAgg ? (
                   <span className="mt-0.5 block">
                     <Delta value={agg.carry.mean - baseAgg.carry.mean} goodWhenUp />
@@ -491,7 +493,9 @@ export function AnalyzeClient({
               </>
             }
             max={Number.isFinite(agg.carry.max) ? fmt(agg.carry.max) : undefined}
-            ideal={bm ? `90→${bm.b90} · 80→${bm.b80}` : idl?.carry}
+            ideal={
+              bm ? `break 90 ~${bm.b90} · break 80 ~${bm.b80}` : idl?.carry
+            }
           />
           <StatCard
             label="Dispersion radius"

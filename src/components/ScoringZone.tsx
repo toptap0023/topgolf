@@ -8,7 +8,7 @@ import { useT, type Dict } from "@/lib/i18n";
 import { Card, SectionTitle } from "./ui";
 
 const L = {
-  title: { en: "Scoring zones", th: "โซนทำสกอร์" },
+  title: { en: "Scoring zones (carry)", th: "โซนทำสกอร์ (carry)" },
   sub: {
     en: "Carry P25–P75 per club — mind the gaps",
     th: "ช่วงระยะจริงต่อไม้ ดูช่องว่าง",
