@@ -7,14 +7,47 @@ import { aggregateByClub } from "@/lib/stats";
 import type { Shot } from "@/lib/types";
 import { importSession } from "@/app/actions";
 import { todayISO, fmt, distanceUnitLabel, speedUnitLabel } from "@/lib/format";
+import { useT, type Dict } from "@/lib/i18n";
 import { Card, SectionTitle } from "@/components/ui";
 import { UploadIcon, CheckIcon } from "@/components/icons";
+
+const L = {
+  title: { en: "Import a Garmin range CSV", th: "นำเข้า CSV ซ้อมไดร์ฟจาก Garmin" },
+  sub: {
+    en: "In the Garmin Golf app, open a range session → ⋯ menu → Export / Share → CSV. Drop the file here or paste its contents.",
+    th: "ในแอป Garmin Golf เปิดเซสชันซ้อม → เมนู ⋯ → Export / Share → CSV แล้วเลือกไฟล์ที่นี่ หรือวางเนื้อหาไฟล์ด้านล่าง",
+  },
+  chooseFile: { en: "Choose CSV file", th: "เลือกไฟล์ CSV" },
+  selected: { en: "Selected:", th: "เลือกแล้ว:" },
+  preview: { en: "Preview", th: "ดูตัวอย่าง" },
+  pasteFirst: {
+    en: "Paste CSV text or choose a file first.",
+    th: "วางข้อความ CSV หรือเลือกไฟล์ก่อน",
+  },
+  noShots: { en: "No shots found.", th: "ไม่พบช็อต" },
+  parsed: { en: "Parsed", th: "อ่านได้" },
+  shotsWord: { en: "shots", th: "ช็อต" },
+  clubsWord: { en: "clubs", th: "ไม้" },
+  unitsWord: { en: "units", th: "หน่วย" },
+  ignoredCols: { en: "Ignored columns:", th: "คอลัมน์ที่ไม่ใช้:" },
+  datePlayed: { en: "Date played", th: "วันที่เล่น" },
+  titleOptional: { en: "Title (optional)", th: "ชื่อ (ไม่บังคับ)" },
+  locationOptional: { en: "Location (optional)", th: "สถานที่ (ไม่บังคับ)" },
+  rangeSession: { en: "Range session", th: "เซสชันซ้อม" },
+  drivingRange: { en: "Driving range", th: "สนามไดร์ฟ" },
+  importing: { en: "Importing…", th: "กำลังนำเข้า…" },
+  importShots: {
+    en: "Import {n} shots as a session",
+    th: "นำเข้า {n} ช็อตเป็นหนึ่งเซสชัน",
+  },
+} satisfies Dict;
 
 const PLACEHOLDER =
   "Club,Date,Ball Speed,Club Speed,Smash Factor,Launch Angle,Carry Distance,Total Distance,Spin Rate,Carry Deviation Distance\n7 Iron,2026-06-19 06:23,112,82,1.37,18.5,152,160,6200,3.2R";
 
 export function ImportClient() {
   const router = useRouter();
+  const t = useT(L);
   const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
   const [filename, setFilename] = useState<string | null>(null);
@@ -28,7 +61,7 @@ export function ImportClient() {
   function ingest(raw: string, name?: string) {
     const res = parseGarminCsv(raw);
     setResult(res);
-    setError(res.shots.length ? null : res.errors[0] ?? "No shots found.");
+    setError(res.shots.length ? null : res.errors[0] ?? t("noShots"));
     const guess = res.dateGuess ?? (name ? dateFromFilename(name) : null);
     if (guess) setPlayedOn(guess);
   }
@@ -48,7 +81,7 @@ export function ImportClient() {
 
   function onPreview() {
     if (!text.trim()) {
-      setError("Paste CSV text or choose a file first.");
+      setError(t("pasteFirst"));
       return;
     }
     ingest(text, filename ?? undefined);
@@ -87,9 +120,7 @@ export function ImportClient() {
   return (
     <div className="flex flex-col gap-5">
       <Card className="p-5">
-        <SectionTitle sub="In the Garmin Golf app, open a range session → ⋯ menu → Export / Share → CSV. Drop the file here or paste its contents.">
-          Import a Garmin range CSV
-        </SectionTitle>
+        <SectionTitle sub={t("sub")}>{t("title")}</SectionTitle>
 
         <div className="flex flex-col gap-3">
           <button
@@ -98,7 +129,7 @@ export function ImportClient() {
             className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-line bg-bg-panel2 px-4 py-4 text-sm font-medium text-ink-muted transition-colors duration-200 hover:border-accent hover:text-accent cursor-pointer"
           >
             <UploadIcon className="h-5 w-5" />
-            {filename ? `Selected: ${filename}` : "Choose CSV file"}
+            {filename ? `${t("selected")} ${filename}` : t("chooseFile")}
           </button>
           <input
             ref={fileRef}
@@ -123,7 +154,7 @@ export function ImportClient() {
             disabled={!text.trim()}
             className="self-start rounded-xl border border-line bg-bg-panel2 px-4 py-2.5 text-sm font-semibold text-ink transition-colors duration-200 hover:border-accent hover:text-accent disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
           >
-            Preview
+            {t("preview")}
           </button>
 
           {error ? (
@@ -139,22 +170,22 @@ export function ImportClient() {
           <div className="flex items-center gap-2 rounded-xl bg-good/10 px-4 py-3 text-sm text-good">
             <CheckIcon className="h-5 w-5 shrink-0" />
             <span>
-              Parsed <b className="tnum">{result.shots.length}</b> shots ·{" "}
-              <b>{aggs.length}</b> clubs · units{" "}
-              {distanceUnitLabel(result.distanceUnit)} /{" "}
+              {t("parsed")} <b className="tnum">{result.shots.length}</b>{" "}
+              {t("shotsWord")} · <b>{aggs.length}</b> {t("clubsWord")} ·{" "}
+              {t("unitsWord")} {distanceUnitLabel(result.distanceUnit)} /{" "}
               {speedUnitLabel(result.speedUnit)}
             </span>
           </div>
 
           {result.unmappedHeaders.length ? (
             <p className="text-[11px] text-ink-muted">
-              Ignored columns: {result.unmappedHeaders.join(", ")}
+              {t("ignoredCols")} {result.unmappedHeaders.join(", ")}
             </p>
           ) : null}
 
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-ink-muted">Date played</span>
+              <span className="font-medium text-ink-muted">{t("datePlayed")}</span>
               <input
                 type="date"
                 value={playedOn}
@@ -163,22 +194,22 @@ export function ImportClient() {
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-ink-muted">Title (optional)</span>
+              <span className="font-medium text-ink-muted">{t("titleOptional")}</span>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Range session"
+                placeholder={t("rangeSession")}
                 className="rounded-xl border border-line bg-bg-panel px-3 py-2.5 text-ink placeholder:text-ink-muted/50 focus:border-accent"
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-ink-muted">Location (optional)</span>
+              <span className="font-medium text-ink-muted">{t("locationOptional")}</span>
               <input
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="Driving range"
+                placeholder={t("drivingRange")}
                 className="rounded-xl border border-line bg-bg-panel px-3 py-2.5 text-ink placeholder:text-ink-muted/50 focus:border-accent"
               />
             </label>
@@ -220,8 +251,8 @@ export function ImportClient() {
             className="rounded-xl bg-accent px-4 py-3.5 font-semibold text-bg shadow-glow transition-colors duration-200 hover:bg-accent-dark disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             {pending
-              ? "Importing…"
-              : `Import ${result.shots.length} shots as a session`}
+              ? t("importing")
+              : t("importShots").replace("{n}", String(result.shots.length))}
           </button>
         </Card>
       ) : null}

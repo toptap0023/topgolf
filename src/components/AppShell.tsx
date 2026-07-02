@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
+import { useT, type Dict } from "@/lib/i18n";
 import {
   GridIcon,
   ListIcon,
@@ -15,12 +16,29 @@ import {
   MoonIcon,
 } from "./icons";
 
-const NAV = [
-  { href: "/", label: "Dashboard", Icon: GridIcon, exact: true },
-  { href: "/sessions", label: "Sessions", Icon: ListIcon },
-  { href: "/analyze", label: "Analyze", Icon: TargetIcon },
-  { href: "/rounds", label: "Rounds", Icon: CardIcon },
-  { href: "/import", label: "Import", Icon: UploadIcon },
+const L = {
+  dashboard: { en: "Dashboard", th: "แดชบอร์ด" },
+  sessions: { en: "Sessions", th: "เซสชัน" },
+  analyze: { en: "Analyze", th: "วิเคราะห์" },
+  rounds: { en: "Rounds", th: "รอบ" },
+  import: { en: "Import", th: "นำเข้า" },
+  exportData: { en: "Export data", th: "ส่งออกข้อมูล" },
+  settings: { en: "Settings", th: "ตั้งค่า" },
+  toggleTheme: { en: "Toggle light / dark", th: "สลับโหมดสว่าง / มืด" },
+} satisfies Dict;
+
+// Labels live in L so they can be translated at render via t(key).
+const NAV: {
+  href: string;
+  key: keyof typeof L;
+  Icon: typeof GridIcon;
+  exact?: boolean;
+}[] = [
+  { href: "/", key: "dashboard", Icon: GridIcon, exact: true },
+  { href: "/sessions", key: "sessions", Icon: ListIcon },
+  { href: "/analyze", key: "analyze", Icon: TargetIcon },
+  { href: "/rounds", key: "rounds", Icon: CardIcon },
+  { href: "/import", key: "import", Icon: UploadIcon },
 ];
 
 const iconBtn =
@@ -33,6 +51,7 @@ function active(pathname: string, href: string, exact?: boolean) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
   const { resolved, toggle } = useTheme();
+  const t = useT(L);
 
   return (
     <div className="min-h-[100dvh]">
@@ -47,7 +66,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="ml-4 hidden items-center gap-1 md:flex">
-            {NAV.map(({ href, label, Icon, exact }) => {
+            {NAV.map(({ href, key, Icon, exact }) => {
               const a = active(pathname, href, exact);
               return (
                 <Link
@@ -60,23 +79,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  {label}
+                  {t(key)}
                 </Link>
               );
             })}
           </nav>
 
           <div className="ml-auto flex items-center gap-0.5">
-            <Link href="/export" aria-label="Export data" className={iconBtn}>
+            <Link href="/export" aria-label={t("exportData")} className={iconBtn}>
               <DownloadIcon className="h-5 w-5" />
             </Link>
-            <Link href="/settings" aria-label="Settings" className={iconBtn}>
+            <Link href="/settings" aria-label={t("settings")} className={iconBtn}>
               <GearIcon className="h-5 w-5" />
             </Link>
             <button
               type="button"
               onClick={toggle}
-              aria-label="Toggle light / dark"
+              aria-label={t("toggleTheme")}
               className={iconBtn}
             >
               {resolved === "dark" ? (
@@ -93,7 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg-soft/90 backdrop-blur-md md:hidden">
         <div className="mx-auto grid max-w-5xl grid-cols-5 pb-safe">
-          {NAV.map(({ href, label, Icon, exact }) => {
+          {NAV.map(({ href, key, Icon, exact }) => {
             const a = active(pathname, href, exact);
             return (
               <Link
@@ -104,7 +123,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                {label}
+                {t(key)}
               </Link>
             );
           })}

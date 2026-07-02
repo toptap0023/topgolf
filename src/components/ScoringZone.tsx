@@ -1,8 +1,27 @@
+"use client";
+
 import type { CarryBand } from "@/lib/stats";
 import type { DistanceUnit } from "@/lib/types";
 import { fmt, distanceUnitLabel } from "@/lib/format";
 import { CATEGORY_COLOR } from "@/lib/clubs";
+import { useT, type Dict } from "@/lib/i18n";
 import { Card, SectionTitle } from "./ui";
+
+const L = {
+  title: { en: "Scoring zones", th: "โซนทำสกอร์" },
+  sub: {
+    en: "Carry P25–P75 per club — mind the gaps",
+    th: "ช่วงระยะจริงต่อไม้ ดูช่องว่าง",
+  },
+  empty: { en: "No carry data yet.", th: "ยังไม่มีข้อมูลระยะ" },
+  gap: { en: "gap", th: "ห่าง" },
+  cap1: {
+    en: "Bar = middle 50% of your carries (P25–P75); the line is your median.",
+    th: "แถบ = ครึ่งกลางของระยะ carry (P25–P75) เส้นคือค่ากลาง",
+  },
+  cap2Pre: { en: "Rows under", th: "ไม้ต่ำกว่า" },
+  cap2Post: { en: "are the scoring zone.", th: "คือโซนทำสกอร์" },
+} satisfies Dict;
 
 /** Carries under this many units are "scoring zone" clubs (wedges / short
  *  irons) where amateurs bleed strokes — highlight those rows. */
@@ -25,16 +44,13 @@ export function ScoringZone({
   distanceUnit: DistanceUnit;
 }) {
   const d = distanceUnitLabel(distanceUnit);
+  const t = useT(L);
 
   if (bands.length === 0)
     return (
       <Card className="p-5">
-        <SectionTitle sub="Carry P25–P75 per club — mind the gaps / ช่วงระยะจริงต่อไม้ ดูช่องว่าง">
-          Scoring zones
-        </SectionTitle>
-        <p className="text-sm text-ink-muted">
-          No carry data yet. / ยังไม่มีข้อมูลระยะ
-        </p>
+        <SectionTitle sub={t("sub")}>{t("title")}</SectionTitle>
+        <p className="text-sm text-ink-muted">{t("empty")}</p>
       </Card>
     );
 
@@ -57,9 +73,7 @@ export function ScoringZone({
 
   return (
     <Card className="p-5">
-      <SectionTitle sub="Carry P25–P75 per club — mind the gaps / ช่วงระยะจริงต่อไม้ ดูช่องว่าง">
-        Scoring zones
-      </SectionTitle>
+      <SectionTitle sub={t("sub")}>{t("title")}</SectionTitle>
 
       <div className="flex flex-col gap-1">
         {bands.map((b, i) => {
@@ -115,7 +129,7 @@ export function ScoringZone({
                 <div className="flex items-center gap-2 pl-[calc(0.5rem+2px)]">
                   <span className="w-12 shrink-0" aria-hidden />
                   <span className="flex-1 text-center text-xs text-warn">
-                    gap ~{fmt(gap)} {d}
+                    {t("gap")} ~{fmt(gap)} {d}
                   </span>
                   <span className="w-16 shrink-0" aria-hidden />
                 </div>
@@ -127,12 +141,7 @@ export function ScoringZone({
 
       <figcaption className="mt-3 space-y-0.5 text-xs text-ink-muted">
         <p>
-          Bar = middle 50% of your carries (P25–P75); the line is your median.
-          Rows under {SCORING_MAX} {d} are the scoring zone.
-        </p>
-        <p>
-          แถบ = ครึ่งกลางของระยะ carry (P25–P75) เส้นคือค่ากลาง — ไม้ต่ำกว่า{" "}
-          {SCORING_MAX} {d} คือโซนทำสกอร์
+          {t("cap1")} {t("cap2Pre")} {SCORING_MAX} {d} {t("cap2Post")}
         </p>
       </figcaption>
     </Card>

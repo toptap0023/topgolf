@@ -29,7 +29,8 @@ export async function importSession(
   payload: ImportPayload
 ): Promise<{ sessionId?: string; error?: string; count?: number }> {
   try {
-    if (!payload.shots.length) return { error: "No shots to import." };
+    if (!payload.shots.length)
+      return { error: "No shots to import / ไม่มีช็อตให้นำเข้า" };
     const supabase = createClient();
 
     const { data: ses, error: e1 } = await supabase
@@ -37,7 +38,8 @@ export async function importSession(
       .insert(payload.session)
       .select("id")
       .single();
-    if (e1 || !ses) return { error: e1?.message ?? "Could not create session." };
+    if (e1 || !ses)
+      return { error: e1?.message ?? "Could not create session / สร้างเซสชันไม่สำเร็จ" };
     const sessionId = ses.id as string;
 
     const rows = payload.shots.map((s, i) => ({
@@ -60,7 +62,9 @@ export async function importSession(
     revalidateAll();
     return { sessionId, count: rows.length };
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Import failed." };
+    return {
+      error: e instanceof Error ? e.message : "Import failed / นำเข้าไม่สำเร็จ",
+    };
   }
 }
 
@@ -98,7 +102,8 @@ export async function addRound(
 export async function importRounds(
   rounds: RoundInput[]
 ): Promise<{ count?: number; error?: string }> {
-  if (!rounds.length) return { error: "No rounds to import." };
+  if (!rounds.length)
+    return { error: "No rounds to import / ไม่มีรอบให้นำเข้า" };
   const supabase = createClient();
   const payload = rounds.map((r) => ({
     played_on: r.played_on || undefined,
@@ -129,7 +134,7 @@ export async function deleteRound(id: string): Promise<{ error?: string }> {
 
 export async function clearAllData(pin: string): Promise<{ error?: string }> {
   if (process.env.APP_PASSCODE && pin !== process.env.APP_PASSCODE)
-    return { error: "PIN ไม่ถูกต้อง" };
+    return { error: "Wrong PIN / PIN ไม่ถูกต้อง" };
   const supabase = createClient();
   // shots cascade from sessions, but delete explicitly to be safe.
   await supabase.from("golf_shots").delete().neq("id", ALL);
@@ -151,8 +156,9 @@ export async function clearAllData(pin: string): Promise<{ error?: string }> {
 export async function revealPin(
   code: string
 ): Promise<{ pin?: string; error?: string }> {
-  if (!process.env.APP_RECOVERY_CODE) return { error: "ยังไม่ได้ตั้งรหัสกู้คืน" };
+  if (!process.env.APP_RECOVERY_CODE)
+    return { error: "No recovery code set / ยังไม่ได้ตั้งรหัสกู้คืน" };
   if (code.trim() !== process.env.APP_RECOVERY_CODE)
-    return { error: "รหัสกู้คืนไม่ถูกต้อง" };
+    return { error: "Wrong recovery code / รหัสกู้คืนไม่ถูกต้อง" };
   return { pin: process.env.APP_PASSCODE };
 }

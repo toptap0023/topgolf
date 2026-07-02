@@ -32,6 +32,106 @@ import {
 import { Card, SectionTitle, StatCard, Badge } from "./ui";
 import { DispersionChart } from "./DispersionChart";
 import { TrendChart } from "./TrendChart";
+import { useT, useLang, type Dict } from "@/lib/i18n";
+
+// Golf jargon (club names, StatCard labels, shot shapes, units) is never
+// translated — only sentences/hints get an en/th pair.
+const L = {
+  noData: { en: "No data to analyze.", th: "ไม่มีข้อมูลให้วิเคราะห์" },
+  filterByDay: { en: "Filter by day", th: "กรองตามวัน" },
+  all: { en: "All", th: "ทั้งหมด" },
+  moreDays: { en: "More days", th: "วันอื่น ๆ" },
+  more: { en: "More", th: "เพิ่มเติม" },
+  selectClub: { en: "Select club", th: "เลือกไม้" },
+  shots: { en: "shots", th: "ช็อต" },
+  buildingDistance: { en: "building distance", th: "กำลังเพิ่มระยะ" },
+  coachingTitle: { en: "Coaching insights", th: "คำแนะนำจากโค้ช" },
+  coachingSub: {
+    en: "What to fix first — start here",
+    th: "สิ่งที่ควรแก้ก่อน — ดูตรงนี้ก่อนเลย",
+  },
+  reliableCarryHint: {
+    en: "Carry you reach ~70% of the time — use this to pick clubs",
+    th: "ระยะที่ตีถึง ~70% ใช้เลือกไม้จริง",
+  },
+  twoWayBad: { en: "two-way miss", th: "พลาด 2 ทาง" },
+  biasLeft: { en: "left bias", th: "เอียงซ้าย" },
+  biasRight: { en: "right bias", th: "เอียงขวา" },
+  onLine: { en: "on line", th: "ตีตรง" },
+  twoWayHint: {
+    en: "≥8% of carry offline both left & right = unstable face",
+    th: "พลาด ≥8% ของ carry ทั้งซ้ายและขวา = หน้าไม้ไม่นิ่ง",
+  },
+  smashEffHint: {
+    en: "vs ideal smash — how flush your contact is",
+    th: "เทียบ smash ideal — โดนเต็มหน้าไม้แค่ไหน",
+  },
+  keyTitle: { en: "Key numbers", th: "ตัวเลขหลัก" },
+  keySub: {
+    en: "The numbers you make decisions with",
+    th: "ตัวเลขหลักที่ใช้ตัดสินใจ",
+  },
+  dispRadiusHint: {
+    en: "±1σ scatter radius — smaller = more accurate",
+    th: "รัศมีวงกระจาย ±1σ — เล็ก = แม่น",
+  },
+  spread: { en: "spread", th: "ช่วงกระจาย" },
+  lowerTighter: { en: "lower = tighter", th: "ยิ่งต่ำ = ยิ่งนิ่ง" },
+  mishit: { en: "mishit", th: "ตีเสีย" },
+  needShots: { en: "need ≥5 shots", th: "ต้องมี ≥5 ช็อต" },
+  vsAvg: { en: "vs avg", th: "เทียบค่าเฉลี่ย" },
+  deliveryTitle: { en: "Delivery", th: "จังหวะปะทะ (Delivery)" },
+  deliverySub: {
+    en: "Face & path at impact — what causes your ball flight",
+    th: "หน้าไม้/วงสวิงตอนปะทะ — สาเหตุของ ball flight",
+  },
+  pathHint: {
+    en: "R = in→out · L = out→in",
+    th: "R = วงสวิง in→out · L = out→in",
+  },
+  faceHint: { en: "R = open · L = closed", th: "R = หน้าเปิด · L = หน้าปิด" },
+  ftpHint: {
+    en: "+ = face open to path · − = closed",
+    th: "+ = หน้าเปิดกว่า path · − = ปิดกว่า",
+  },
+  launchTitle: { en: "Launch & spin", th: "Launch & spin" },
+  launchSub: { en: "Launch angle + spin", th: "มุมขึ้น + สปิน" },
+  sidespinHint: {
+    en: "+R / −L — which way the ball curves",
+    th: "+R / −L — ทิศโค้งของลูก",
+  },
+  spinAxisHint: {
+    en: "Spin axis tilt +R / −L — which way the ball curves",
+    th: "แกนสปินเอียง +R / −L — ทิศโค้งของลูก",
+  },
+  apexHint: { en: "Peak ball height", th: "ความสูงสูงสุดของลูก" },
+  speedTitle: { en: "Speed", th: "ความเร็ว" },
+  speedSub: { en: "Ball & club speed", th: "ความเร็วลูกและหัวไม้" },
+  patternTitle: { en: "Shot pattern", th: "รูปแบบการกระจายลูก" },
+  patternSub: {
+    en: "Each dot is one shot; ellipse = ±1σ group",
+    th: "จุดละ 1 ช็อต · วงรี = กลุ่ม ±1σ",
+  },
+  trendRange: { en: "Trend range", th: "ช่วงเวลาเทรนด์" },
+  carryTrendTitle: { en: "Carry trend", th: "เทรนด์ Carry" },
+  consTrendTitle: { en: "Consistency trend", th: "เทรนด์ความนิ่ง" },
+  consTrendSub: {
+    en: "Shot-to-shot carry spread per session",
+    th: "การเหวี่ยงของ carry ในแต่ละรอบซ้อม",
+  },
+  sideTrendTitle: { en: "Side bias trend", th: "เทรนด์ Side bias" },
+  sideTrendSub: {
+    en: "+ right · − left (vs the 0 line) — which side you miss more",
+    th: "+ ขวา · − ซ้าย (เทียบเส้น 0) — พลาดทางไหนบ่อยกว่า",
+  },
+  noTrendData: {
+    en: "Not enough data in this range.",
+    th: "ข้อมูลในช่วงนี้ยังไม่พอ",
+  },
+  workOnTitle: { en: "What to work on", th: "สิ่งที่ควรฝึก" },
+  tightening: { en: "tightening ↘", th: "แคบลง ↘" },
+  widening: { en: "widening ↗", th: "กว้างขึ้น ↗" },
+} satisfies Dict;
 
 // Rough "good amateur" targets per club type — shown under each stat for comparison.
 const IDEAL: Record<
@@ -62,6 +162,8 @@ export function AnalyzeClient({
   distanceUnit: DistanceUnit;
   speedUnit: SpeedUnit;
 }) {
+  const t = useT(L);
+  const { lang } = useLang();
   const [day, setDay] = useState<string>("all"); // "all" | YYYY-MM-DD
   const [club, setClub] = useState<string>("");
   const [range, setRange] = useState(12); // trend window in months
@@ -131,7 +233,7 @@ export function AnalyzeClient({
   const consSlope = slope(consPts);
 
   if (!agg)
-    return <p className="text-sm text-ink-muted">No data to analyze.</p>;
+    return <p className="text-sm text-ink-muted">{t("noData")}</p>;
 
   const shape = shotShape(agg);
   const contact = contactQuality(agg);
@@ -147,7 +249,7 @@ export function AnalyzeClient({
     const good = goodWhenUp ? up : !up;
     return (
       <span className={`tnum ${good ? "text-good" : "text-bad"}`}>
-        {up ? "▲" : "▼"} {fmt1(Math.abs(value))} vs avg
+        {up ? "▲" : "▼"} {fmt1(Math.abs(value))} {t("vsAvg")}
       </span>
     );
   }
@@ -173,10 +275,10 @@ export function AnalyzeClient({
         <div
           className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4"
           role="group"
-          aria-label="Filter by day"
+          aria-label={t("filterByDay")}
         >
           {[
-            { key: "all", label: "All" },
+            { key: "all", label: t("all") },
             ...dates.slice(0, 4).map((dd) => ({ key: dd, label: dayLabel(dd) })),
           ].map((opt) => (
             <button
@@ -201,14 +303,14 @@ export function AnalyzeClient({
                   <select
                     value={olderActive ? day : ""}
                     onChange={(e) => e.target.value && setDay(e.target.value)}
-                    aria-label="More days"
+                    aria-label={t("moreDays")}
                     className={`cursor-pointer appearance-none rounded-full border py-1.5 pl-3 pr-8 text-sm font-medium focus:outline-none ${
                       olderActive
                         ? "border-accent bg-accent/10 text-accent"
                         : "border-line bg-bg-panel text-ink-muted hover:text-ink"
                     }`}
                   >
-                    <option value="">More</option>
+                    <option value="">{t("more")}</option>
                     {dates.slice(4).map((dd) => (
                       <option key={dd} value={dd}>
                         {dayLabel(dd)}
@@ -229,7 +331,7 @@ export function AnalyzeClient({
         <div
           className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4"
           role="group"
-          aria-label="Select club"
+          aria-label={t("selectClub")}
         >
           {aggs.map((a) => (
             <button
@@ -263,21 +365,20 @@ export function AnalyzeClient({
           ) : agg.carry.mean >= bm.b90 ? (
             <Badge tone="warn">break-90 carry</Badge>
           ) : (
-            <Badge tone="info">building distance</Badge>
+            <Badge tone="info">{t("buildingDistance")}</Badge>
           )
         ) : null}
         <Badge tone={shape.tone}>{shape.label}</Badge>
         <Badge tone={contact.tone}>{contact.label} contact</Badge>
         <span className="text-sm text-ink-muted">
-          · {agg.count} shots{day !== "all" ? ` · ${dayLabel(day)}` : ""}
+          · {agg.count} {t("shots")}
+          {day !== "all" ? ` · ${dayLabel(day)}` : ""}
         </span>
       </div>
 
       {/* 1 — Coaching insights (most actionable first) */}
       <div>
-        <SectionTitle sub="สิ่งที่ควรแก้ก่อน — ดูตรงนี้ก่อนเลย">
-          Coaching insights
-        </SectionTitle>
+        <SectionTitle sub={t("coachingSub")}>{t("coachingTitle")}</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard
             label="Strike"
@@ -288,14 +389,14 @@ export function AnalyzeClient({
             }
             unit="AoA"
             badge={{ label: strike.label, tone: strike.tone }}
-            hint={strike.detail}
+            hint={strike.detail[lang]}
             ideal={aoaIdeal}
           />
           <StatCard
             label="Reliable carry"
             value={Number.isFinite(reliableCarry) ? fmt(reliableCarry) : "—"}
             unit={d}
-            hint="ระยะที่ตีถึง ~70% ใช้เลือกไม้จริง"
+            hint={t("reliableCarryHint")}
           />
           <StatCard
             label="Two-way miss"
@@ -307,22 +408,25 @@ export function AnalyzeClient({
             badge={
               tw.n
                 ? tw.twoWay
-                  ? { label: "พลาด 2 ทาง", tone: "bad" }
+                  ? { label: t("twoWayBad"), tone: "bad" as const }
                   : Math.max(tw.leftPct, tw.rightPct) >= 40
                     ? {
-                        label: `เอียง${tw.leftPct >= tw.rightPct ? "ซ้าย" : "ขวา"}`,
-                        tone: "warn",
+                        label:
+                          tw.leftPct >= tw.rightPct
+                            ? t("biasLeft")
+                            : t("biasRight"),
+                        tone: "warn" as const,
                       }
-                    : { label: "ตีตรง", tone: "good" }
+                    : { label: t("onLine"), tone: "good" as const }
                 : undefined
             }
-            hint="พลาด ≥8% ของ carry ทั้งซ้ายและขวา = หน้าไม้ไม่นิ่ง"
+            hint={t("twoWayHint")}
           />
           <StatCard
             label="Smash efficiency"
             value={Number.isFinite(smashEff) ? fmt(smashEff) : "—"}
             unit="%"
-            hint="เทียบ smash ideal — โดนเต็มหน้าไม้แค่ไหน"
+            hint={t("smashEffHint")}
             ideal="100%"
           />
         </div>
@@ -330,7 +434,7 @@ export function AnalyzeClient({
 
       {/* 2 — Key numbers */}
       <div>
-        <SectionTitle sub="ตัวเลขหลักที่ใช้ตัดสินใจ">Key numbers</SectionTitle>
+        <SectionTitle sub={t("keySub")}>{t("keyTitle")}</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard
             label="Avg carry"
@@ -353,13 +457,13 @@ export function AnalyzeClient({
             label="Dispersion radius"
             value={Number.isFinite(dispRadius) ? fmt1(dispRadius) : "—"}
             unit={d}
-            hint="รัศมีวงกระจาย ±1σ — เล็ก = แม่น"
+            hint={t("dispRadiusHint")}
           />
           <StatCard
             label="Side bias"
             value={lr(agg.lateral.mean)}
             unit={d}
-            hint={`±${fmt1(agg.lateral.std)} spread`}
+            hint={`±${fmt1(agg.lateral.std)} ${t("spread")}`}
             ideal="≈ 0"
           />
           <StatCard
@@ -368,7 +472,7 @@ export function AnalyzeClient({
             unit="% CV"
             hint={
               <>
-                lower = tighter
+                {t("lowerTighter")}
                 {showDelta && baseAgg ? (
                   <span className="mt-0.5 block">
                     <Delta
@@ -388,8 +492,8 @@ export function AnalyzeClient({
             hint={
               <>
                 {Number.isFinite(agg.missRate)
-                  ? `${agg.missCount} / ${agg.count + agg.missCount} mishit`
-                  : "need ≥5 shots"}
+                  ? `${agg.missCount} / ${agg.count + agg.missCount} ${t("mishit")}`
+                  : t("needShots")}
                 {showDelta &&
                 baseAgg &&
                 Number.isFinite(agg.missRate) &&
@@ -428,9 +532,7 @@ export function AnalyzeClient({
 
       {/* 3 — Delivery */}
       <div>
-        <SectionTitle sub="หน้าไม้/วงสวิงตอนปะทะ — สาเหตุของ ball flight">
-          Delivery
-        </SectionTitle>
+        <SectionTitle sub={t("deliverySub")}>{t("deliveryTitle")}</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard
             label="Club path"
@@ -444,7 +546,7 @@ export function AnalyzeClient({
                 ? pathDir(agg.clubPath.mean)
                 : undefined
             }
-            hint="R = in→out · L = out→in"
+            hint={t("pathHint")}
             ideal="≈ 0°"
           />
           <StatCard
@@ -457,13 +559,13 @@ export function AnalyzeClient({
             unit={
               Number.isFinite(agg.face.mean) ? faceDir(agg.face.mean) : undefined
             }
-            hint="R = open · L = closed"
+            hint={t("faceHint")}
             ideal="≈ 0°"
           />
           <StatCard
             label="Face to path"
             value={Number.isFinite(agg.faceToPath.mean) ? `${pm(agg.faceToPath.mean)}°` : "—"}
-            hint="+ = หน้าเปิดกว่า path · − = ปิดกว่า"
+            hint={t("ftpHint")}
             ideal="≈ 0°"
           />
         </div>
@@ -471,7 +573,7 @@ export function AnalyzeClient({
 
       {/* 4 — Launch & spin */}
       <div>
-        <SectionTitle sub="มุมขึ้น + สปิน">Launch &amp; spin</SectionTitle>
+        <SectionTitle sub={t("launchSub")}>{t("launchTitle")}</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard
             label="Launch"
@@ -497,27 +599,27 @@ export function AnalyzeClient({
             label="Sidespin"
             value={Number.isFinite(agg.sideSpin.mean) ? lr(agg.sideSpin.mean) : "—"}
             unit="rpm"
-            hint="+R / −L — ทิศโค้งของลูก"
+            hint={t("sidespinHint")}
           />
           <StatCard
             label="Spin axis"
             value={Number.isFinite(agg.spinAxis.mean) ? lr(agg.spinAxis.mean, 1) : "—"}
             unit="°"
-            hint="แกนสปินเอียง +R / −L — ทิศโค้งของลูก"
+            hint={t("spinAxisHint")}
           />
           <StatCard
             label="Apex"
             value={Number.isFinite(agg.apex.mean) ? fmt1(agg.apex.mean) : "—"}
             unit="m"
             max={Number.isFinite(agg.apex.max) ? fmt1(agg.apex.max) : undefined}
-            hint="ความสูงสูงสุดของลูก"
+            hint={t("apexHint")}
           />
         </div>
       </div>
 
       {/* 5 — Speed */}
       <div>
-        <SectionTitle sub="ความเร็ว">Speed</SectionTitle>
+        <SectionTitle sub={t("speedSub")}>{t("speedTitle")}</SectionTitle>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard
             label="Ball speed"
@@ -537,9 +639,7 @@ export function AnalyzeClient({
 
       <div className={`grid gap-5 ${day === "all" ? "lg:grid-cols-2" : ""}`}>
         <Card className="p-5">
-          <SectionTitle sub="Each dot is one shot; ellipse = ±1σ group">
-            Shot pattern
-          </SectionTitle>
+          <SectionTitle sub={t("patternSub")}>{t("patternTitle")}</SectionTitle>
           <div className="mx-auto max-w-sm">
             <DispersionChart
               dispersion={disp}
@@ -555,7 +655,7 @@ export function AnalyzeClient({
         <div className="flex flex-col gap-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-              Trend range
+              {t("trendRange")}
             </span>
             <div className="flex rounded-lg border border-line p-0.5">
               {[1, 3, 6, 12].map((m) => (
@@ -575,38 +675,44 @@ export function AnalyzeClient({
             </div>
           </div>
           <Card className="p-5">
-            <SectionTitle sub={`Average carry per session · last ${range} mo (${d})`}>
-              Carry trend
+            <SectionTitle
+              sub={
+                lang === "th"
+                  ? `carry เฉลี่ยต่อรอบซ้อม · ${range} เดือนล่าสุด (${d})`
+                  : `Average carry per session · last ${range} mo (${d})`
+              }
+            >
+              {t("carryTrendTitle")}
             </SectionTitle>
             <TrendChart
               series={carrySeries}
               unit={d}
               yLabel="Carry"
-              empty="Not enough data in this range."
+              empty={t("noTrendData")}
             />
           </Card>
           <Card className="p-5">
-            <SectionTitle sub="Shot-to-shot carry spread per session">
-              Consistency trend
+            <SectionTitle sub={t("consTrendSub")}>
+              {t("consTrendTitle")}
             </SectionTitle>
             <TrendChart
               series={consSeries}
               unit={d}
               yLabel="Carry σ"
               lowerBetter
-              empty="Not enough data in this range."
+              empty={t("noTrendData")}
             />
           </Card>
           <Card className="p-5">
-            <SectionTitle sub="+ ขวา · − ซ้าย (เทียบเส้น 0) — พลาดทางไหนบ่อยกว่า">
-              Side bias trend
+            <SectionTitle sub={t("sideTrendSub")}>
+              {t("sideTrendTitle")}
             </SectionTitle>
             <TrendChart
               series={sideSeries}
               unit={d}
               yLabel="Side (+R / −L)"
               target={0}
-              empty="Not enough data in this range."
+              empty={t("noTrendData")}
             />
           </Card>
         </div>
@@ -614,33 +720,41 @@ export function AnalyzeClient({
       </div>
 
       <Card className="p-5">
-        <SectionTitle sub={`Quick, data-driven pointers for your ${activeClub}`}>
-          What to work on
+        <SectionTitle
+          sub={
+            lang === "th"
+              ? `คำแนะนำสั้น ๆ จากข้อมูล ${activeClub} ของคุณ`
+              : `Quick, data-driven pointers for your ${activeClub}`
+          }
+        >
+          {t("workOnTitle")}
         </SectionTitle>
         {carryPts.length >= 2 ? (
           <p className="mb-3 text-sm text-ink-muted">
-            Last {range} mo · {carryPts.length} sessions: carry{" "}
+            {lang === "th"
+              ? `${range} เดือนล่าสุด · ${carryPts.length} รอบซ้อม: carry `
+              : `Last ${range} mo · ${carryPts.length} sessions: carry `}
             <b className="text-ink">
               {carrySlope >= 0 ? "+" : ""}
-              {carrySlope.toFixed(1)} {d}/session
+              {carrySlope.toFixed(1)} {d}
+              {lang === "th" ? "/รอบ" : "/session"}
             </b>
-            , dispersion{" "}
+            {lang === "th" ? " · การกระจาย" : ", dispersion"}{" "}
             <b className={consSlope <= 0 ? "text-good" : "text-bad"}>
-              {consSlope <= 0 ? "tightening ↘" : "widening ↗"}
+              {consSlope <= 0 ? t("tightening") : t("widening")}
             </b>
             .
           </p>
         ) : null}
         <ul className="flex flex-col gap-3">
-          {tips.map((t, i) => (
+          {tips.map((tip, i) => (
             <li key={i} className="flex gap-2 text-sm">
               <span
                 className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
                 aria-hidden
               />
-              <span>
-                <span className="text-ink">{t.text}</span>
-                <span className="mt-1 block text-ink-muted">{t.th}</span>
+              <span className="text-ink">
+                {lang === "th" ? tip.th : tip.text}
               </span>
             </li>
           ))}

@@ -9,8 +9,28 @@ import {
 } from "@/lib/roundsCsv";
 import { importRounds } from "@/app/actions";
 import { formatDate } from "@/lib/format";
+import { useT, type Dict } from "@/lib/i18n";
 import { Card } from "./ui";
 import { CopyIcon, CheckIcon, UploadIcon } from "./icons";
+
+const L = {
+  title: { en: "Import from scorecard", th: "นำเข้าจาก scorecard" },
+  hide: { en: "Hide", th: "ซ่อน" },
+  importCsv: { en: "Import CSV", th: "นำเข้า CSV" },
+  instructions: {
+    en: "Photograph your scorecard, paste this prompt into Gemini with the photo, then paste the CSV it returns below.",
+    th: "ถ่ายรูป scorecard → วาง prompt นี้ใน Gemini พร้อมรูป → ก๊อป CSV ที่ได้มาวางด้านล่าง",
+  },
+  copied: { en: "Copied!", th: "คัดลอกแล้ว!" },
+  copyPrompt: { en: "Copy AI scorecard prompt", th: "คัดลอก prompt อ่าน scorecard" },
+  hidePrompt: { en: "Hide prompt", th: "ซ่อน prompt" },
+  viewPrompt: { en: "View prompt", th: "ดู prompt" },
+  preview: { en: "Preview", th: "ดูตัวอย่าง" },
+  noRounds: { en: "No rounds found.", th: "ไม่พบรอบ" },
+  importing: { en: "Importing…", th: "กำลังนำเข้า…" },
+  importRound1: { en: "Import 1 round", th: "นำเข้า 1 รอบ" },
+  importRoundN: { en: "Import {n} rounds", th: "นำเข้า {n} รอบ" },
+} satisfies Dict;
 
 async function copyText(text: string): Promise<boolean> {
   try {
@@ -26,6 +46,7 @@ async function copyText(text: string): Promise<boolean> {
 
 export function RoundsImport() {
   const router = useRouter();
+  const t = useT(L);
   const [open, setOpen] = useState(false);
   const [csv, setCsv] = useState("");
   const [rounds, setRounds] = useState<RoundInput[] | null>(null);
@@ -52,7 +73,7 @@ export function RoundsImport() {
     const res = parseRoundsCsv(csv);
     if (!res.rounds.length) {
       setRounds(null);
-      setError(res.errors[0] ?? "No rounds found.");
+      setError(res.errors[0] ?? t("noRounds"));
       return;
     }
     setRounds(res.rounds);
@@ -76,24 +97,20 @@ export function RoundsImport() {
   return (
     <Card className="p-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-bold text-ink">Import from scorecard</h2>
+        <h2 className="text-base font-bold text-ink">{t("title")}</h2>
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
           className="flex items-center gap-1 text-sm font-medium text-accent cursor-pointer"
         >
           <UploadIcon className="h-4 w-4" />
-          {open ? "Hide" : "Import CSV"}
+          {open ? t("hide") : t("importCsv")}
         </button>
       </div>
 
       {open ? (
         <div className="mt-4 flex flex-col gap-3">
-          <p className="text-sm text-ink-muted">
-            ถ่ายรูป scorecard → วาง prompt นี้ใน Gemini พร้อมรูป → ก๊อป CSV ที่ได้
-            มาวางด้านล่าง. (Photograph your scorecard, paste this prompt into
-            Gemini with the photo, then paste the CSV it returns below.)
-          </p>
+          <p className="text-sm text-ink-muted">{t("instructions")}</p>
 
           <div className="flex flex-wrap gap-2">
             <button
@@ -106,14 +123,14 @@ export function RoundsImport() {
               ) : (
                 <CopyIcon className="h-3.5 w-3.5" />
               )}
-              {copied ? "Copied!" : "Copy AI scorecard prompt"}
+              {copied ? t("copied") : t("copyPrompt")}
             </button>
             <button
               type="button"
               onClick={() => setShowPrompt((s) => !s)}
               className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-muted hover:text-ink cursor-pointer"
             >
-              {showPrompt ? "Hide prompt" : "View prompt"}
+              {showPrompt ? t("hidePrompt") : t("viewPrompt")}
             </button>
           </div>
           {showPrompt ? (
@@ -142,7 +159,7 @@ export function RoundsImport() {
             disabled={!csv.trim()}
             className="self-start rounded-xl border border-line bg-bg-panel2 px-4 py-2.5 text-sm font-semibold text-ink transition-colors duration-200 hover:border-accent hover:text-accent disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
           >
-            Preview
+            {t("preview")}
           </button>
 
           {error ? (
@@ -196,8 +213,10 @@ export function RoundsImport() {
                 className="rounded-xl bg-accent px-4 py-3 font-semibold text-bg shadow-glow transition-colors duration-200 hover:bg-accent-dark disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
               >
                 {pending
-                  ? "Importing…"
-                  : `Import ${rounds.length} round${rounds.length === 1 ? "" : "s"}`}
+                  ? t("importing")
+                  : rounds.length === 1
+                    ? t("importRound1")
+                    : t("importRoundN").replace("{n}", String(rounds.length))}
               </button>
             </>
           ) : null}

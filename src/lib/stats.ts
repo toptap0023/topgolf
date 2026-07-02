@@ -362,8 +362,8 @@ export function slope(points: { value: number }[]): number {
 /* ---------------------------- shot shape / tendency ---------------------- */
 export type Tone = "good" | "warn" | "bad" | "info";
 export interface Tendency {
-  label: string;
-  detail: string;
+  label: string; // EN golf jargon, never translated
+  detail: { en: string; th: string };
   tone: Tone;
 }
 
@@ -387,7 +387,11 @@ export function shotShape(agg: ClubAgg): Tendency {
       : NaN;
 
   if (!Number.isFinite(bias) && !Number.isFinite(axis))
-    return { label: "—", detail: "Not enough data", tone: "info" };
+    return {
+      label: "—",
+      detail: { en: "Not enough data", th: "ข้อมูลยังไม่พอ" },
+      tone: "info",
+    };
 
   const dir =
     Number.isFinite(bias) && Math.abs(bias) >= 0.05
@@ -403,16 +407,36 @@ export function shotShape(agg: ClubAgg): Tendency {
   const strong = Number.isFinite(offlinePct) ? offlinePct > 8 : false;
 
   if (dir === "straight" || (Number.isFinite(offlinePct) && offlinePct < 3))
-    return { label: "Straight", detail: "Tight, on-line pattern", tone: "good" };
+    return {
+      label: "Straight",
+      detail: { en: "Tight, on-line pattern", th: "กลุ่มแน่น ตรงแนวเป้า" },
+      tone: "good",
+    };
 
   if (dir === "right")
     return strong
-      ? { label: "Slice / Push", detail: "Misses well right", tone: "bad" }
-      : { label: "Fade", detail: "Gentle left-to-right", tone: "warn" };
+      ? {
+          label: "Slice / Push",
+          detail: { en: "Misses well right", th: "พลาดขวาเยอะ" },
+          tone: "bad",
+        }
+      : {
+          label: "Fade",
+          detail: { en: "Gentle left-to-right", th: "โค้งซ้ายไปขวาเล็กน้อย" },
+          tone: "warn",
+        };
 
   return strong
-    ? { label: "Hook / Pull", detail: "Misses well left", tone: "bad" }
-    : { label: "Draw", detail: "Gentle right-to-left", tone: "warn" };
+    ? {
+        label: "Hook / Pull",
+        detail: { en: "Misses well left", th: "พลาดซ้ายเยอะ" },
+        tone: "bad",
+      }
+    : {
+        label: "Draw",
+        detail: { en: "Gentle right-to-left", th: "โค้งขวาไปซ้ายเล็กน้อย" },
+        tone: "warn",
+      };
 }
 
 /** Short, preliminary "what to adjust" tips for one club — pure logic, no AI. */
@@ -530,13 +554,29 @@ export function bagTips(
 /** Contact-quality verdict from smash factor vs the ideal for that club type. */
 export function contactQuality(agg: ClubAgg): Tendency {
   if (!agg.smash.n)
-    return { label: "—", detail: "No smash data", tone: "info" };
+    return {
+      label: "—",
+      detail: { en: "No smash data", th: "ไม่มีข้อมูล smash" },
+      tone: "info",
+    };
   const diff = agg.smash.mean - agg.smashIdeal;
   if (diff >= -0.03)
-    return { label: "Solid", detail: "Centered strike", tone: "good" };
+    return {
+      label: "Solid",
+      detail: { en: "Centered strike", th: "โดนกลางหน้าไม้" },
+      tone: "good",
+    };
   if (diff >= -0.08)
-    return { label: "Decent", detail: "Slightly off-center", tone: "warn" };
-  return { label: "Thin / toe-heel", detail: "Poor contact", tone: "bad" };
+    return {
+      label: "Decent",
+      detail: { en: "Slightly off-center", th: "เยื้องจากกลางหน้าไม้เล็กน้อย" },
+      tone: "warn",
+    };
+  return {
+    label: "Thin / toe-heel",
+    detail: { en: "Poor contact", th: "โดนไม่เต็มหน้าไม้" },
+    tone: "bad",
+  };
 }
 
 /**
@@ -547,17 +587,53 @@ export function contactQuality(agg: ClubAgg): Tendency {
 export function strikeVerdict(agg: ClubAgg): Tendency {
   const aoa = agg.attackAngle.n ? agg.attackAngle.mean : NaN;
   if (!Number.isFinite(aoa))
-    return { label: "—", detail: "ไม่มีข้อมูล attack angle", tone: "info" };
+    return {
+      label: "—",
+      detail: { en: "No attack angle data", th: "ไม่มีข้อมูล attack angle" },
+      tone: "info",
+    };
   if (agg.category === "Driver")
     return aoa < 0
-      ? { label: "Hitting down", detail: "ตีลงใส่ไดรเวอร์ — ลองตีขึ้น (+) เพิ่มระยะ", tone: "warn" }
-      : { label: "Hitting up", detail: "ตีขึ้นถูกต้องสำหรับไดรเวอร์", tone: "good" };
+      ? {
+          label: "Hitting down",
+          detail: {
+            en: "Hitting down with driver — try hitting up (+) for more distance",
+            th: "ตีลงใส่ไดรเวอร์ — ลองตีขึ้น (+) เพิ่มระยะ",
+          },
+          tone: "warn",
+        }
+      : {
+          label: "Hitting up",
+          detail: {
+            en: "Hitting up — correct for driver",
+            th: "ตีขึ้นถูกต้องสำหรับไดรเวอร์",
+          },
+          tone: "good",
+        };
   const smashOff = agg.smash.n ? agg.smash.mean - agg.smashIdeal : NaN;
   if (aoa >= 0 && Number.isFinite(smashOff) && smashOff < -0.08)
-    return { label: "Hitting behind?", detail: "วงเข้าระดับ/ขึ้น + โดนไม่เต็ม — อาจตีหลังลูก/ปาดบาง", tone: "bad" };
+    return {
+      label: "Hitting behind?",
+      detail: {
+        en: "Level/upward strike + weak contact — likely hitting behind the ball or thinning it",
+        th: "วงเข้าระดับ/ขึ้น + โดนไม่เต็ม — อาจตีหลังลูก/ปาดบาง",
+      },
+      tone: "bad",
+    };
   if (aoa >= 1)
-    return { label: "Catching up", detail: "ตีขึ้นกับเหล็ก — กดลงโดนลูกก่อนดิน", tone: "warn" };
-  return { label: "Ball-first", detail: "ตีลงโดนลูกก่อนดิน (ดี)", tone: "good" };
+    return {
+      label: "Catching up",
+      detail: {
+        en: "Hitting up with irons — strike down, ball first",
+        th: "ตีขึ้นกับเหล็ก — กดลงโดนลูกก่อนดิน",
+      },
+      tone: "warn",
+    };
+  return {
+    label: "Ball-first",
+    detail: { en: "Ball-first, hitting down (good)", th: "ตีลงโดนลูกก่อนดิน (ดี)" },
+    tone: "good",
+  };
 }
 
 /* ============ practice tools: caddy · scoring zones · fatigue · benchmark ==

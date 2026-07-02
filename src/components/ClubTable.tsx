@@ -1,3 +1,5 @@
+"use client";
+
 import type { ClubAgg } from "@/lib/stats";
 import { shotShape, contactQuality } from "@/lib/stats";
 import type { DistanceUnit, SpeedUnit } from "@/lib/types";
@@ -13,6 +15,11 @@ import {
 } from "@/lib/format";
 import { CATEGORY_COLOR } from "@/lib/clubs";
 import { Badge } from "./ui";
+import { useT, type Dict } from "@/lib/i18n";
+
+const L = {
+  noShots: { en: "No shots yet.", th: "ยังไม่มีช็อต" },
+} satisfies Dict;
 
 const th = "px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-ink-muted whitespace-nowrap";
 const td = "px-3 py-2 text-sm whitespace-nowrap tnum";
@@ -28,11 +35,12 @@ export function ClubTable({
   distanceUnit: DistanceUnit;
   speedUnit: SpeedUnit;
 }) {
+  const t = useT(L);
   const d = distanceUnitLabel(distanceUnit);
   const sp = speedUnitLabel(speedUnit);
 
   if (aggs.length === 0)
-    return <p className="text-sm text-ink-muted">No shots yet.</p>;
+    return <p className="text-sm text-ink-muted">{t("noShots")}</p>;
 
   return (
     <div className="-mx-1 overflow-x-auto">

@@ -1,8 +1,48 @@
 "use client";
 
 import { useState } from "react";
+import { useT, type Dict } from "@/lib/i18n";
 import { Card, SectionTitle } from "./ui";
 import { DownloadIcon, CopyIcon, CheckIcon } from "./icons";
+
+const L = {
+  exportCsv: { en: "Export CSV", th: "ส่งออก CSV" },
+  exportCsvSub: {
+    en: "Download to a file, or copy straight to your clipboard to paste into any AI / spreadsheet.",
+    th: "ดาวน์โหลดเป็นไฟล์ หรือคัดลอกไปวางใน AI / สเปรดชีตอะไรก็ได้",
+  },
+  clubSummaryTitle: { en: "Club summary (every club)", th: "สรุปรายไม้ (ทุกไม้)" },
+  clubSummaryDesc: {
+    en: "Per-club averages: carry, dispersion, smash, launch, spin, path, face, shape.",
+    th: "ค่าเฉลี่ยต่อไม้: carry, dispersion, smash, launch, spin, path, face, shape",
+  },
+  allShotsTitle: { en: "All shots", th: "ช็อตทั้งหมด" },
+  allShotsDesc: {
+    en: "Every shot, one row each — {n} total.",
+    th: "ทุกช็อต แถวละหนึ่งช็อต — รวม {n} ช็อต",
+  },
+  roundsTitle: { en: "Rounds / scorecards", th: "รอบ / scorecard" },
+  roundsDesc1: {
+    en: "Your logged 18-hole scores — 1 round.",
+    th: "สกอร์ 18 หลุมที่บันทึกไว้ — 1 รอบ",
+  },
+  roundsDescN: {
+    en: "Your logged 18-hole scores — {n} rounds.",
+    th: "สกอร์ 18 หลุมที่บันทึกไว้ — {n} รอบ",
+  },
+  download: { en: "Download", th: "ดาวน์โหลด" },
+  copy: { en: "Copy", th: "คัดลอก" },
+  copiedShort: { en: "Copied", th: "คัดลอกแล้ว" },
+  coachTitle: { en: "AI coach prompt", th: "Prompt โค้ช AI" },
+  coachSub: {
+    en: "A ready-made prompt with your stats built in — paste into Gemini, ChatGPT, or Claude for a personalized plan.",
+    th: "Prompt สำเร็จรูปพร้อมสถิติของคุณ — วางใน Gemini, ChatGPT หรือ Claude เพื่อรับแผนซ้อมเฉพาะตัว",
+  },
+  copyCoach: { en: "Copy AI coach prompt", th: "คัดลอก prompt โค้ช AI" },
+  copied: { en: "Copied!", th: "คัดลอกแล้ว!" },
+  hide: { en: "Hide", th: "ซ่อน" },
+  previewPrompt: { en: "Preview prompt", th: "ดูตัวอย่าง prompt" },
+} satisfies Dict;
 
 function download(name: string, content: string, type = "text/csv;charset=utf-8") {
   const blob = new Blob([content], { type });
@@ -47,6 +87,7 @@ function ExportRow({
   filename: string;
   disabled?: boolean;
 }) {
+  const t = useT(L);
   const [copied, setCopied] = useState(false);
   const btn =
     "flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-xs font-semibold transition-colors duration-200 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed";
@@ -64,7 +105,7 @@ function ExportRow({
           className={`${btn} bg-bg-panel text-ink hover:border-accent hover:text-accent`}
         >
           <DownloadIcon className="h-4 w-4" />
-          Download
+          {t("download")}
         </button>
         <button
           type="button"
@@ -82,7 +123,7 @@ function ExportRow({
           ) : (
             <CopyIcon className="h-4 w-4" />
           )}
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("copiedShort") : t("copy")}
         </button>
       </div>
     </div>
@@ -104,6 +145,7 @@ export function ExportClient({
   shotCount: number;
   roundCount: number;
 }) {
+  const t = useT(L);
   const [copied, setCopied] = useState(false);
   const [show, setShow] = useState(false);
 
@@ -120,26 +162,28 @@ export function ExportClient({
   return (
     <div className="flex flex-col gap-5">
       <Card className="flex flex-col gap-3 p-5">
-        <SectionTitle sub="Download to a file, or copy straight to your clipboard to paste into any AI / spreadsheet.">
-          Export CSV
-        </SectionTitle>
+        <SectionTitle sub={t("exportCsvSub")}>{t("exportCsv")}</SectionTitle>
         <ExportRow
-          title="Club summary (every club)"
-          desc="Per-club averages: carry, dispersion, smash, launch, spin, path, face, shape."
+          title={t("clubSummaryTitle")}
+          desc={t("clubSummaryDesc")}
           content={clubCsv}
           filename={`topgolfer-club-summary-${stamp()}.csv`}
           disabled={shotCount === 0}
         />
         <ExportRow
-          title="All shots"
-          desc={`Every shot, one row each — ${shotCount} total.`}
+          title={t("allShotsTitle")}
+          desc={t("allShotsDesc").replace("{n}", String(shotCount))}
           content={allShotsCsv}
           filename={`topgolfer-shots-${stamp()}.csv`}
           disabled={shotCount === 0}
         />
         <ExportRow
-          title="Rounds / scorecards"
-          desc={`Your logged 18-hole scores — ${roundCount} round${roundCount === 1 ? "" : "s"}.`}
+          title={t("roundsTitle")}
+          desc={
+            roundCount === 1
+              ? t("roundsDesc1")
+              : t("roundsDescN").replace("{n}", String(roundCount))
+          }
           content={roundsCsv}
           filename={`topgolfer-rounds-${stamp()}.csv`}
           disabled={roundCount === 0}
@@ -147,9 +191,7 @@ export function ExportClient({
       </Card>
 
       <Card className="flex flex-col gap-3 p-5">
-        <SectionTitle sub="A ready-made prompt with your stats built in — paste into Gemini, ChatGPT, or Claude for a personalized plan.">
-          AI coach prompt
-        </SectionTitle>
+        <SectionTitle sub={t("coachSub")}>{t("coachTitle")}</SectionTitle>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -157,14 +199,14 @@ export function ExportClient({
             className="flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-bg shadow-glow transition-colors duration-200 hover:bg-accent-dark cursor-pointer"
           >
             {copied ? <CheckIcon className="h-5 w-5" /> : <CopyIcon className="h-5 w-5" />}
-            {copied ? "Copied!" : "Copy AI coach prompt"}
+            {copied ? t("copied") : t("copyCoach")}
           </button>
           <button
             type="button"
             onClick={() => setShow((s) => !s)}
             className="flex items-center justify-center gap-2 rounded-xl border border-line bg-bg-panel2 px-4 py-3 text-sm font-semibold text-ink transition-colors duration-200 hover:border-accent hover:text-accent cursor-pointer"
           >
-            {show ? "Hide" : "Preview prompt"}
+            {show ? t("hide") : t("previewPrompt")}
           </button>
         </div>
         {show ? (

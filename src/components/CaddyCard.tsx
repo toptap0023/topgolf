@@ -6,9 +6,28 @@ import { clubForDistance } from "@/lib/stats";
 import type { DistanceUnit } from "@/lib/types";
 import { fmt, distanceUnitLabel } from "@/lib/format";
 import { CATEGORY_COLOR } from "@/lib/clubs";
+import { useT, type Dict } from "@/lib/i18n";
 import { Card, SectionTitle } from "./ui";
 
 const QUICK_PICKS = [100, 120, 140, 160, 180];
+
+const L = {
+  title: { en: "Caddy — club by distance", th: "แคดดี้ — เลือกไม้ตามระยะ" },
+  sub: { en: "Enter a distance, get the right club", th: "ใส่ระยะแล้วเลือกไม้ให้" },
+  empty: {
+    en: "Import range shots to use the caddy.",
+    th: "อัปข้อมูลซ้อมก่อนใช้ตัวช่วยเลือกไม้",
+  },
+  toTarget: { en: "to target", th: "ถึงเป้า" },
+  noMatch: { en: "No club matches yet.", th: "ยังไม่มีไม้ที่เข้ากับระยะนี้" },
+  nextBest: { en: "Next best", th: "ตัวเลือกถัดไป" },
+  spotOn: { en: "spot on", th: "ระยะพอดี" },
+  shortPre: { en: "comes up", th: "สั้นไป" },
+  shortPost: { en: "short", th: "" },
+  pastPre: { en: "flies", th: "เกินไป" },
+  pastPost: { en: "past", th: "" },
+  avgCarry: { en: "avg carry", th: "ระยะเฉลี่ย" },
+} satisfies Dict;
 
 /**
  * "Which club from this distance?" caddy tool. Enter a target and it ranks the
@@ -23,6 +42,7 @@ export function CaddyCard({
   distanceUnit: DistanceUnit;
 }) {
   const d = distanceUnitLabel(distanceUnit);
+  const t = useT(L);
   const [target, setTarget] = useState<number>(150);
 
   const picks = useMemo(() => clubForDistance(aggs, target), [aggs, target]);
@@ -30,13 +50,8 @@ export function CaddyCard({
   if (aggs.length === 0)
     return (
       <Card className="p-5">
-        <SectionTitle sub="Enter a distance, get the right club / ใส่ระยะแล้วเลือกไม้ให้">
-          Caddy — club by distance
-        </SectionTitle>
-        <p className="text-sm text-ink-muted">
-          Import range shots to use the caddy. /
-          อัปข้อมูลซ้อมก่อนใช้ตัวช่วยเลือกไม้
-        </p>
+        <SectionTitle sub={t("sub")}>{t("title")}</SectionTitle>
+        <p className="text-sm text-ink-muted">{t("empty")}</p>
       </Card>
     );
 
@@ -45,9 +60,7 @@ export function CaddyCard({
 
   return (
     <Card className="p-5">
-      <SectionTitle sub="Enter a distance, get the right club / ใส่ระยะแล้วเลือกไม้ให้">
-        Caddy — club by distance
-      </SectionTitle>
+      <SectionTitle sub={t("sub")}>{t("title")}</SectionTitle>
 
       <div className="flex items-center gap-2">
         <input
@@ -58,7 +71,7 @@ export function CaddyCard({
           className="w-28 rounded-xl border border-line bg-bg-panel px-3 py-2.5 text-ink tnum focus:border-accent"
           aria-label={`Target distance in ${d}`}
         />
-        <span className="text-sm text-ink-muted">{d} to target / ระยะถึงเป้า</span>
+        <span className="text-sm text-ink-muted">{d} {t("toTarget")}</span>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -84,15 +97,13 @@ export function CaddyCard({
       {top ? (
         <TopPick pick={top} d={d} />
       ) : (
-        <p className="mt-4 text-sm text-ink-muted">
-          No club matches yet. / ยังไม่มีไม้ที่เข้ากับระยะนี้
-        </p>
+        <p className="mt-4 text-sm text-ink-muted">{t("noMatch")}</p>
       )}
 
       {rest.length > 0 ? (
         <div className="mt-4 flex flex-col gap-2 border-t border-line pt-3">
           <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-            Next best / ตัวเลือกถัดไป
+            {t("nextBest")}
           </p>
           {rest.map((p) => (
             <div
@@ -127,13 +138,14 @@ function TopPick({
   pick: ReturnType<typeof clubForDistance>[number];
   d: string;
 }) {
+  const t = useT(L);
   const spotOn = Math.abs(pick.diff) <= 3;
   const verdictClass = spotOn ? "text-good" : "text-warn";
   const verdict = spotOn
-    ? "spot on / ระยะพอดี"
+    ? t("spotOn")
     : pick.diff < 0
-      ? `comes up ${fmt(-pick.diff)} ${d} short / สั้นไป`
-      : `flies ${fmt(pick.diff)} ${d} past / เกินไป`;
+      ? `${t("shortPre")} ${fmt(-pick.diff)} ${d} ${t("shortPost")}`.trim()
+      : `${t("pastPre")} ${fmt(pick.diff)} ${d} ${t("pastPost")}`.trim();
 
   return (
     <div className="mt-4">
@@ -150,8 +162,7 @@ function TopPick({
       </div>
       <p className={`mt-1 text-sm font-medium ${verdictClass}`}>{verdict}</p>
       <p className="mt-0.5 text-xs text-ink-muted">
-        avg carry <span className="tnum text-ink">{fmt(pick.mean)}</span> {d} /
-        ระยะเฉลี่ย
+        {t("avgCarry")} <span className="tnum text-ink">{fmt(pick.mean)}</span> {d}
       </p>
     </div>
   );

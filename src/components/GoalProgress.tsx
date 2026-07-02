@@ -3,6 +3,17 @@
 import { Card } from "./ui";
 import { fmt } from "@/lib/format";
 import { useGoal } from "@/lib/goal";
+import { useT, type Dict } from "@/lib/i18n";
+
+const L = {
+  goal: { en: "Goal", th: "เป้าหมาย" },
+  avgScore: { en: "avg score", th: "สกอร์เฉลี่ย" },
+  logRound: {
+    en: "Log a round to start tracking",
+    th: "บันทึกรอบเพื่อเริ่มติดตาม",
+  },
+  best: { en: "best", th: "ดีสุด" },
+} satisfies Dict;
 
 /** Visualizes progress along the score journey: start → target (user-set in Settings). */
 export function GoalProgress({
@@ -12,6 +23,7 @@ export function GoalProgress({
   current: number | null;
   best?: number | null;
 }) {
+  const t = useT(L);
   const [{ start, target }] = useGoal();
   const have = current != null && Number.isFinite(current);
   // 0% at start, 100% at target. Lower score = more progress.
@@ -25,19 +37,19 @@ export function GoalProgress({
       <div className="flex items-end justify-between">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-            Goal · {start} → {target}
+            {t("goal")} · {start} → {target}
           </p>
           <p className="mt-1 text-2xl font-bold text-ink">
             {have ? (
               <>
                 <span className="tnum">{fmt(current)}</span>
                 <span className="ml-1 text-sm font-medium text-ink-muted">
-                  avg score
+                  {t("avgScore")}
                 </span>
               </>
             ) : (
               <span className="text-base font-medium text-ink-muted">
-                Log a round to start tracking
+                {t("logRound")}
               </span>
             )}
           </p>
@@ -67,7 +79,7 @@ export function GoalProgress({
       <div className="mt-1.5 flex justify-between text-[11px] text-ink-muted">
         <span className="tnum">{start}</span>
         {best != null && Number.isFinite(best) ? (
-          <span className="tnum text-good">best {fmt(best)}</span>
+          <span className="tnum text-good">{t("best")} {fmt(best)}</span>
         ) : null}
         <span className="tnum">{target}</span>
       </div>

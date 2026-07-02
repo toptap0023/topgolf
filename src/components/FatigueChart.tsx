@@ -1,13 +1,43 @@
+"use client";
+
 import type { FatiguePoint } from "@/lib/stats";
 import { fmt } from "@/lib/format";
 import { niceTicks, pickIndices } from "@/lib/chart";
+import { useT, type Dict } from "@/lib/i18n";
 import { Card, SectionTitle } from "./ui";
+
+const L = {
+  title: { en: "Fatigue", th: "ความล้า" },
+  sub: {
+    en: "Carry vs shot order — are you fading?",
+    th: "ระยะเทียบลำดับช็อต",
+  },
+  empty: {
+    en: "Need more shots to read fatigue.",
+    th: "ช็อตยังน้อย ดูความล้าไม่ได้",
+  },
+  legendY: {
+    en: "carry % of club session mean (100 = normal)",
+    th: "carry % ของค่าเฉลี่ยไม้ในเซสชัน (100 = ปกติ)",
+  },
+  legendX: { en: "shot order →", th: "ลำดับช็อต →" },
+  fadedPre: { en: "Carry faded", th: "ระยะช่วงท้ายตก" },
+  fadedPost: {
+    en: "late in the session — consider fewer balls or breaks.",
+    th: "ลองตีน้อยลงหรือพัก",
+  },
+  steady: {
+    en: "Carry held steady through the session.",
+    th: "ระยะนิ่งตลอดเซสชัน",
+  },
+} satisfies Dict;
 
 /** Within one range session: does carry fade as the user tires? Plots each
  *  shot's carry as a % of its club's session mean (100 = normal) over shot
  *  order, with a dashed baseline at 100. A verdict compares the first third
  *  vs the last third to flag late-session drop-off. */
 export function FatigueChart({ data }: { data: FatiguePoint[] }) {
+  const t = useT(L);
   const pts = data.filter(
     (p): p is FatiguePoint & { carryIdx: number } => p.carryIdx != null
   );
@@ -15,12 +45,8 @@ export function FatigueChart({ data }: { data: FatiguePoint[] }) {
   if (pts.length < 8) {
     return (
       <Card className="p-5">
-        <SectionTitle sub="Carry vs shot order — are you fading? / ระยะเทียบลำดับช็อต">
-          Fatigue
-        </SectionTitle>
-        <p className="text-sm text-ink-muted">
-          Need more shots to read fatigue. / ช็อตยังน้อย ดูความล้าไม่ได้
-        </p>
+        <SectionTitle sub={t("sub")}>{t("title")}</SectionTitle>
+        <p className="text-sm text-ink-muted">{t("empty")}</p>
       </Card>
     );
   }
@@ -68,9 +94,7 @@ export function FatigueChart({ data }: { data: FatiguePoint[] }) {
 
   return (
     <Card className="p-5">
-      <SectionTitle sub="Carry vs shot order — are you fading? / ระยะเทียบลำดับช็อต">
-        Fatigue
-      </SectionTitle>
+      <SectionTitle sub={t("sub")}>{t("title")}</SectionTitle>
 
       <figure>
         <svg
@@ -155,20 +179,17 @@ export function FatigueChart({ data }: { data: FatiguePoint[] }) {
         </svg>
 
         <figcaption className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-ink-muted">
-          <span>carry % of club session mean (100 = normal)</span>
-          <span>shot order →</span>
+          <span>{t("legendY")}</span>
+          <span>{t("legendX")}</span>
         </figcaption>
       </figure>
 
       {faded ? (
         <p className="mt-3 text-sm text-warn">
-          Carry faded {fmt(drop)}% late in the session — consider fewer balls or
-          breaks. / ระยะตกช่วงท้าย ~{fmt(drop)}% ลองตีน้อยลง/พัก
+          {t("fadedPre")} {fmt(drop)}% {t("fadedPost")}
         </p>
       ) : (
-        <p className="mt-3 text-sm text-good">
-          Carry held steady through the session. / ระยะนิ่งตลอดเซสชัน
-        </p>
+        <p className="mt-3 text-sm text-good">{t("steady")}</p>
       )}
     </Card>
   );

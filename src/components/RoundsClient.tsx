@@ -9,6 +9,29 @@ import { TrendChart } from "./TrendChart";
 import { PlusIcon, TrashIcon } from "./icons";
 import { todayISO, formatDate } from "@/lib/format";
 import { useGoal } from "@/lib/goal";
+import { useT, type Dict } from "@/lib/i18n";
+
+const L = {
+  scoreTrend: { en: "Score trend", th: "แนวโน้มสกอร์" },
+  scoreTrendSub: {
+    en: "18-hole scores over time — chasing the {target} line",
+    th: "สกอร์ 18 หลุมตามเวลา — ไล่ตามเส้นเป้า {target}",
+  },
+  trendEmpty: {
+    en: "Log a couple of rounds to see your trend.",
+    th: "บันทึกสักสองสามรอบเพื่อดูแนวโน้ม",
+  },
+  logRound: { en: "Log a round", th: "บันทึกรอบ" },
+  addRound: { en: "Add round", th: "เพิ่มรอบ" },
+  hide: { en: "Hide", th: "ซ่อน" },
+  courseOptional: { en: "Course (optional)", th: "Course (ไม่บังคับ)" },
+  courseName: { en: "Course name", th: "ชื่อสนาม" },
+  enterScore: { en: "Enter your score.", th: "กรอกสกอร์ของคุณ" },
+  saving: { en: "Saving…", th: "กำลังบันทึก…" },
+  saveRound: { en: "Save round", th: "บันทึกรอบ" },
+  deleteConfirm: { en: "Delete round {date}?", th: "ลบรอบ {date}?" },
+  deleteRound: { en: "Delete round", th: "ลบรอบ" },
+} satisfies Dict;
 
 const numOrNull = (v: string) => {
   const n = parseInt(v, 10);
@@ -17,6 +40,7 @@ const numOrNull = (v: string) => {
 
 export function RoundsClient({ rounds }: { rounds: GolfRound[] }) {
   const router = useRouter();
+  const t = useT(L);
   const [{ target }] = useGoal();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(rounds.length === 0);
@@ -31,7 +55,7 @@ export function RoundsClient({ rounds }: { rounds: GolfRound[] }) {
 
   function submit() {
     if (!score.trim()) {
-      setError("Enter your score.");
+      setError(t("enterScore"));
       return;
     }
     setError(null);
@@ -79,29 +103,31 @@ export function RoundsClient({ rounds }: { rounds: GolfRound[] }) {
     <div className="flex flex-col gap-5">
       {scored.length ? (
         <Card className="p-5">
-          <SectionTitle sub={`18-hole scores over time — chasing the ${target} line`}>
-            Score trend
+          <SectionTitle
+            sub={t("scoreTrendSub").replace("{target}", String(target))}
+          >
+            {t("scoreTrend")}
           </SectionTitle>
           <TrendChart
             series={series}
             yLabel="Score"
             target={target}
             lowerBetter
-            empty="Log a couple of rounds to see your trend."
+            empty={t("trendEmpty")}
           />
         </Card>
       ) : null}
 
       <Card className="p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-ink">Log a round</h2>
+          <h2 className="text-base font-bold text-ink">{t("logRound")}</h2>
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
             className="flex items-center gap-1 text-sm font-medium text-accent cursor-pointer"
           >
             <PlusIcon className="h-4 w-4" />
-            {open ? "Hide" : "Add round"}
+            {open ? t("hide") : t("addRound")}
           </button>
         </div>
 
@@ -118,12 +144,12 @@ export function RoundsClient({ rounds }: { rounds: GolfRound[] }) {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="font-medium text-ink-muted">Course (optional)</span>
+                <span className="font-medium text-ink-muted">{t("courseOptional")}</span>
                 <input
                   type="text"
                   value={course}
                   onChange={(e) => setCourse(e.target.value)}
-                  placeholder="Course name"
+                  placeholder={t("courseName")}
                   className={input}
                 />
               </label>
@@ -185,7 +211,7 @@ export function RoundsClient({ rounds }: { rounds: GolfRound[] }) {
               disabled={pending}
               className="self-start rounded-xl bg-accent px-5 py-2.5 font-semibold text-bg shadow-glow transition-colors duration-200 hover:bg-accent-dark disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
             >
-              {pending ? "Saving…" : "Save round"}
+              {pending ? t("saving") : t("saveRound")}
             </button>
           </div>
         ) : null}
@@ -214,10 +240,18 @@ export function RoundsClient({ rounds }: { rounds: GolfRound[] }) {
                 </div>
                 <button
                   type="button"
-                  aria-label="Delete round"
+                  aria-label={t("deleteRound")}
                   onClick={() => {
                     // ponytail: native confirm — no modal component for one prompt
-                    if (!confirm(`Delete round ${formatDate(r.played_on)}? / ลบรอบนี้?`)) return;
+                    if (
+                      !confirm(
+                        t("deleteConfirm").replace(
+                          "{date}",
+                          formatDate(r.played_on)
+                        )
+                      )
+                    )
+                      return;
                     start(async () => {
                       await deleteRound(r.id);
                       router.refresh();
