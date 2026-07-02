@@ -2,18 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTheme } from "./ThemeProvider";
 import { useT, type Dict } from "@/lib/i18n";
 import {
   GridIcon,
   ListIcon,
   TargetIcon,
   CardIcon,
-  UploadIcon,
   DownloadIcon,
+  UploadIcon,
   GearIcon,
-  SunIcon,
-  MoonIcon,
 } from "./icons";
 
 const L = {
@@ -24,7 +21,6 @@ const L = {
   import: { en: "Import", th: "นำเข้า" },
   exportData: { en: "Export data", th: "ส่งออกข้อมูล" },
   settings: { en: "Settings", th: "ตั้งค่า" },
-  toggleTheme: { en: "Toggle light / dark", th: "สลับโหมดสว่าง / มืด" },
 } satisfies Dict;
 
 // Labels live in L so they can be translated at render via t(key).
@@ -38,7 +34,7 @@ const NAV: {
   { href: "/sessions", key: "sessions", Icon: ListIcon },
   { href: "/analyze", key: "analyze", Icon: TargetIcon },
   { href: "/rounds", key: "rounds", Icon: CardIcon },
-  { href: "/import", key: "import", Icon: UploadIcon },
+  { href: "/import", key: "import", Icon: DownloadIcon },
 ];
 
 const iconBtn =
@@ -50,7 +46,6 @@ function active(pathname: string, href: string, exact?: boolean) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
-  const { resolved, toggle } = useTheme();
   const t = useT(L);
 
   return (
@@ -87,23 +82,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="ml-auto flex items-center gap-0.5">
             <Link href="/export" aria-label={t("exportData")} className={iconBtn}>
-              <DownloadIcon className="h-5 w-5" />
+              <UploadIcon className="h-5 w-5" />
             </Link>
             <Link href="/settings" aria-label={t("settings")} className={iconBtn}>
               <GearIcon className="h-5 w-5" />
             </Link>
-            <button
-              type="button"
-              onClick={toggle}
-              aria-label={t("toggleTheme")}
-              className={iconBtn}
-            >
-              {resolved === "dark" ? (
-                <SunIcon className="h-5 w-5" />
-              ) : (
-                <MoonIcon className="h-5 w-5" />
-              )}
-            </button>
           </div>
         </div>
       </header>

@@ -9,7 +9,7 @@ import { importSession } from "@/app/actions";
 import { todayISO, fmt, distanceUnitLabel, speedUnitLabel } from "@/lib/format";
 import { useT, type Dict } from "@/lib/i18n";
 import { Card, SectionTitle } from "@/components/ui";
-import { UploadIcon, CheckIcon } from "@/components/icons";
+import { DownloadIcon, CheckIcon } from "@/components/icons";
 
 const L = {
   title: { en: "Import a Garmin range CSV", th: "นำเข้า CSV ซ้อมไดร์ฟจาก Garmin" },
@@ -128,7 +128,7 @@ export function ImportClient() {
             onClick={() => fileRef.current?.click()}
             className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-line bg-bg-panel2 px-4 py-4 text-sm font-medium text-ink-muted transition-colors duration-200 hover:border-accent hover:text-accent cursor-pointer"
           >
-            <UploadIcon className="h-5 w-5" />
+            <DownloadIcon className="h-5 w-5" />
             {filename ? `${t("selected")} ${filename}` : t("chooseFile")}
           </button>
           <input

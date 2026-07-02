@@ -5,6 +5,7 @@ import {
   scoringSummary,
   carryBands,
 } from "@/lib/stats";
+import { buildCoachPrompt } from "@/lib/csv";
 import { DashboardClient } from "@/components/DashboardClient";
 
 export const revalidate = 60;
@@ -21,11 +22,26 @@ export default async function DashboardPage() {
   const { hcp, avgScore, avgPutts, avgFairways, avgGir, ideal: scoreIdeal } =
     scoringSummary(rounds);
 
+  const kpis = overallKpis(shots);
+  const aggs = aggregateByClub(shots);
+  const distanceUnit = sessions[0]?.distance_unit ?? "yds";
+  const speedUnit = sessions[0]?.speed_unit ?? "mph";
+  const coachPrompt = buildCoachPrompt({
+    aggs,
+    kpis,
+    rounds,
+    distanceUnit,
+    speedUnit,
+    currentScore: rounds.find((r) => r.score != null)?.score ?? null,
+    targetScore: 85,
+  });
+
   return (
     <DashboardClient
       empty={shots.length === 0 && rounds.length === 0}
-      kpis={overallKpis(shots)}
-      aggs={aggregateByClub(shots)}
+      kpis={kpis}
+      aggs={aggs}
+      coachPrompt={coachPrompt}
       bands={carryBands(shots)}
       rounds={rounds}
       sessionsCount={sessions.length}
@@ -37,8 +53,8 @@ export default async function DashboardPage() {
       avgGir={avgGir}
       scoreIdeal={scoreIdeal}
       best={best}
-      distanceUnit={sessions[0]?.distance_unit ?? "yds"}
-      speedUnit={sessions[0]?.speed_unit ?? "mph"}
+      distanceUnit={distanceUnit}
+      speedUnit={speedUnit}
     />
   );
 }

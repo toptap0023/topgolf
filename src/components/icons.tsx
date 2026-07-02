@@ -94,6 +94,20 @@ export const CheckIcon = ({ className }: P) => (
     <path d="M20 6 9 17l-5-5" />
   </svg>
 );
+export const SparkIcon = ({ className }: P) => (
+  <svg {...base(className)}>
+    <path
+      d="M12 3l2.1 5.6L20 10.5l-5.9 1.9L12 18l-2.1-5.6L4 10.5l5.9-1.9Z"
+      fill="currentColor"
+      stroke="none"
+    />
+    <path
+      d="M18.5 15.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9Z"
+      fill="currentColor"
+      stroke="none"
+    />
+  </svg>
+);
 export const ChevronRightIcon = ({ className }: P) => (
   <svg {...base(className)}>
     <path d="m9 18 6-6-6-6" />

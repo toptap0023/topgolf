@@ -11,7 +11,7 @@ import { importRounds } from "@/app/actions";
 import { formatDate } from "@/lib/format";
 import { useT, type Dict } from "@/lib/i18n";
 import { Card } from "./ui";
-import { CopyIcon, CheckIcon, UploadIcon } from "./icons";
+import { CopyIcon, CheckIcon, DownloadIcon } from "./icons";
 
 const L = {
   title: { en: "Import from scorecard", th: "นำเข้าจาก scorecard" },
@@ -103,7 +103,7 @@ export function RoundsImport() {
           onClick={() => setOpen((o) => !o)}
           className="flex items-center gap-1 text-sm font-medium text-accent cursor-pointer"
         >
-          <UploadIcon className="h-4 w-4" />
+          <DownloadIcon className="h-4 w-4" />
           {open ? t("hide") : t("importCsv")}
         </button>
       </div>

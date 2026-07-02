@@ -4,7 +4,7 @@ import { getSessionShots, getSessions } from "@/lib/data";
 import type { Shot } from "@/lib/types";
 import { AnalyzeClient } from "@/components/AnalyzeClient";
 import { EmptyState } from "@/components/ui";
-import { TargetIcon, UploadIcon } from "@/components/icons";
+import { TargetIcon, DownloadIcon } from "@/components/icons";
 
 export const revalidate = 60;
 
@@ -26,7 +26,7 @@ export default async function AnalyzePage() {
             href="/import"
             className="mt-1 flex items-center gap-2 rounded-xl bg-accent px-5 py-3 font-semibold text-bg shadow-glow transition-colors duration-200 hover:bg-accent-dark cursor-pointer"
           >
-            <UploadIcon className="h-5 w-5" />
+            <DownloadIcon className="h-5 w-5" />
             Import Garmin CSV
           </Link>
         }

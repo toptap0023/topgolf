@@ -247,13 +247,14 @@ export function AnalyzeClient({
   // "Today vs baseline" delta — only meaningful when scoped to one day and we
   // have an all-sessions baseline for the same club. Renders a tiny arrow line.
   const showDelta = day !== "all" && !!baseAgg;
+  // Arrow shows quality, not numeric direction: better than average = ▲ green,
+  // worse = ▼ red (e.g. miss rate dropping is an improvement → ▲).
   function Delta({ value, goodWhenUp }: { value: number; goodWhenUp: boolean }) {
     if (!Number.isFinite(value) || Math.abs(value) < 0.05) return null;
-    const up = value > 0;
-    const good = goodWhenUp ? up : !up;
+    const good = goodWhenUp ? value > 0 : value < 0;
     return (
       <span className={`tnum ${good ? "text-good" : "text-bad"}`}>
-        {up ? "▲" : "▼"} {fmt1(Math.abs(value))} {t("vsAvg")}
+        {good ? "▲" : "▼"} {fmt1(Math.abs(value))} {t("vsAvg")}
       </span>
     );
   }

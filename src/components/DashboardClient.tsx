@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { ClubAgg, Kpis, CarryBand } from "@/lib/stats";
 import type { DistanceUnit, SpeedUnit, GolfRound } from "@/lib/types";
 import { CaddyCard } from "@/components/CaddyCard";
@@ -17,7 +18,14 @@ import { Card, SectionTitle, StatCard, EmptyState } from "@/components/ui";
 import { GoalProgress } from "@/components/GoalProgress";
 import { GapMonitor } from "@/components/GapMonitor";
 import { ClubTable } from "@/components/ClubTable";
-import { UploadIcon, FlagIcon, ChevronRightIcon } from "@/components/icons";
+import {
+  DownloadIcon,
+  FlagIcon,
+  ChevronRightIcon,
+  SparkIcon,
+  CopyIcon,
+  CheckIcon,
+} from "@/components/icons";
 import { useT, type Dict } from "@/lib/i18n";
 
 const L = {
@@ -47,12 +55,21 @@ const L = {
   clubAverages: { en: "Club averages", th: "ค่าเฉลี่ยแต่ละไม้" },
   speedsIn: { en: "Speeds in", th: "ความเร็วเป็น" },
   distancesIn: { en: "distances in", th: "ระยะเป็น" },
+  aiCoach: { en: "AI Coach", th: "โค้ช AI" },
+  aiCoachSub: {
+    en: "Copy this prompt (your stats included) and paste it into ChatGPT / Gemini / Claude for a coaching plan.",
+    th: "ก๊อปพรอมป์นี้ (มีสถิติของคุณครบ) ไปวางใน ChatGPT / Gemini / Claude เพื่อขอแผนซ้อม",
+  },
+  copyPrompt: { en: "Copy prompt", th: "ก๊อปพรอมป์" },
+  copied: { en: "Copied!", th: "ก๊อปแล้ว!" },
+  close: { en: "Close", th: "ปิด" },
 } satisfies Dict;
 
 export function DashboardClient({
   empty,
   kpis,
   aggs,
+  coachPrompt,
   bands,
   rounds,
   sessionsCount,
@@ -70,6 +87,7 @@ export function DashboardClient({
   empty: boolean;
   kpis: Kpis;
   aggs: ClubAgg[];
+  coachPrompt: string;
   bands: CarryBand[];
   rounds: GolfRound[];
   sessionsCount: number;
@@ -88,6 +106,8 @@ export function DashboardClient({
   const d = distanceUnitLabel(distanceUnit);
   const sp = speedUnitLabel(speedUnit);
   const scores = rounds.filter((r) => r.score != null);
+  const [coachOpen, setCoachOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (empty) {
     return (
@@ -100,7 +120,7 @@ export function DashboardClient({
             href="/import"
             className="mt-1 flex items-center gap-2 rounded-xl bg-accent px-5 py-3 font-semibold text-bg shadow-glow transition-colors duration-200 hover:bg-accent-dark cursor-pointer"
           >
-            <UploadIcon className="h-5 w-5" />
+            <DownloadIcon className="h-5 w-5" />
             {t("importCsv")}
           </Link>
         }
@@ -118,14 +138,66 @@ export function DashboardClient({
             {lastPlayed ? ` · ${t("lastPlayed")} ${formatDate(lastPlayed)}` : ""}
           </p>
         </div>
-        <Link
-          href="/import"
+        <button
+          type="button"
+          onClick={() => {
+            setCopied(false);
+            setCoachOpen(true);
+          }}
           className="flex shrink-0 items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg shadow-glow transition-colors duration-200 hover:bg-accent-dark cursor-pointer"
         >
-          <UploadIcon className="h-4 w-4" />
-          {t("importBtn")}
-        </Link>
+          <SparkIcon className="h-4 w-4" />
+          {t("aiCoach")}
+        </button>
       </div>
+
+      {coachOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("aiCoach")}
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+          onClick={() => setCoachOpen(false)}
+        >
+          <div
+            className="w-full max-w-lg rounded-xl2 border border-line bg-bg-panel p-5 shadow-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="flex items-center gap-2 text-base font-bold text-ink">
+              <SparkIcon className="h-5 w-5 text-accent" />
+              {t("aiCoach")}
+            </h2>
+            <p className="mt-1 text-sm text-ink-muted">{t("aiCoachSub")}</p>
+            <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-bg-panel2 p-3 text-xs text-ink-muted">
+              {coachPrompt}
+            </pre>
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(coachPrompt);
+                  setCopied(true);
+                }}
+                className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg shadow-glow transition-colors duration-200 hover:bg-accent-dark cursor-pointer"
+              >
+                {copied ? (
+                  <CheckIcon className="h-4 w-4" />
+                ) : (
+                  <CopyIcon className="h-4 w-4" />
+                )}
+                {copied ? t("copied") : t("copyPrompt")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCoachOpen(false)}
+                className="text-sm text-ink-muted hover:text-ink cursor-pointer"
+              >
+                {t("close")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <GoalProgress
         current={avgScore != null ? Math.round(avgScore) : null}

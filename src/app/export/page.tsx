@@ -6,7 +6,7 @@ import { shotsToCsv, clubTableCsv, roundsToCsv, buildCoachPrompt } from "@/lib/c
 import type { GolfSession } from "@/lib/types";
 import { ExportClient } from "@/components/ExportClient";
 import { EmptyState } from "@/components/ui";
-import { DownloadIcon, UploadIcon } from "@/components/icons";
+import { UploadIcon, DownloadIcon } from "@/components/icons";
 
 export const revalidate = 60;
 export const metadata = { title: "Export · TOPgolfer" };
@@ -21,7 +21,7 @@ export default async function ExportPage() {
   if (shots.length === 0 && rounds.length === 0)
     return (
       <EmptyState
-        icon={<DownloadIcon className="h-7 w-7" />}
+        icon={<UploadIcon className="h-7 w-7" />}
         title="Nothing to export yet"
         message="Import some range data first, then come back to download CSVs or grab an AI coaching prompt."
         action={
@@ -29,7 +29,7 @@ export default async function ExportPage() {
             href="/import"
             className="mt-1 flex items-center gap-2 rounded-xl bg-accent px-5 py-3 font-semibold text-bg shadow-glow transition-colors duration-200 hover:bg-accent-dark cursor-pointer"
           >
-            <UploadIcon className="h-5 w-5" />
+            <DownloadIcon className="h-5 w-5" />
             Import Garmin CSV
           </Link>
         }
