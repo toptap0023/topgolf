@@ -832,6 +832,16 @@ export function benchmarkForClub(club: string): ClubBenchmark | null {
   return CLUB_BENCHMARK[club] ?? null;
 }
 
+/** Ideal carry for the player's handicap, interpolated between the break-90
+ *  (≈18 hcp) and break-80 (≈8 hcp) anchors. hcp clamped to 0–30 so the line
+ *  isn't extrapolated into nonsense. */
+export function idealCarryForHcp(club: string, hcp: number): number | null {
+  const bm = benchmarkForClub(club);
+  if (!bm || !Number.isFinite(hcp)) return null;
+  const h = Math.max(0, Math.min(30, hcp));
+  return Math.round(bm.b90 + ((18 - h) * (bm.b80 - bm.b90)) / 10);
+}
+
 /** Two-way miss: share of shots ≥8% of carry offline to each side. */
 export function twoWayMiss(shots: Shot[]): {
   leftPct: number;

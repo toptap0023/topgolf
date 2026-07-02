@@ -15,7 +15,7 @@ import {
   strikeVerdict,
   twoWayMiss,
   splitMisses,
-  benchmarkForClub,
+  idealCarryForHcp,
   shapeBreakdown,
   SHAPE_INFO,
 } from "@/lib/stats";
@@ -35,6 +35,7 @@ import { Card, SectionTitle, StatCard, Badge } from "./ui";
 import { DispersionChart } from "./DispersionChart";
 import { TrendChart } from "./TrendChart";
 import { useT, useLang, type Dict } from "@/lib/i18n";
+import { useGoal } from "@/lib/goal";
 
 // Golf jargon (club names, StatCard labels, shot shapes, units) is never
 // translated — only sentences/hints get an en/th pair.
@@ -47,7 +48,9 @@ const L = {
   more: { en: "More", th: "เพิ่มเติม" },
   selectClub: { en: "Select club", th: "เลือกไม้" },
   shots: { en: "shots", th: "ช็อต" },
-  buildingDistance: { en: "building distance", th: "กำลังเพิ่มระยะ" },
+  aboveLevel: { en: "above HCP level", th: "เกินระดับ HCP" },
+  onLevel: { en: "at HCP level", th: "ตามระดับ HCP" },
+  belowLevel: { en: "below HCP level", th: "ต่ำกว่าระดับ HCP" },
   coachingTitle: { en: "Coaching insights", th: "คำแนะนำจากโค้ช" },
   coachingSub: {
     en: "What to fix first — start here",
@@ -160,13 +163,18 @@ export function AnalyzeClient({
   sessionShots,
   distanceUnit,
   speedUnit,
+  hcp,
 }: {
   sessionShots: SessionShots[];
   distanceUnit: DistanceUnit;
   speedUnit: SpeedUnit;
+  hcp: number | null;
 }) {
   const t = useT(L);
   const { lang } = useLang();
+  const [{ target }] = useGoal();
+  // Player level for "ideal carry": estimated hcp, else derived from the goal.
+  const refHcp = hcp ?? Math.max(0, target - 72);
   const [day, setDay] = useState<string>("all"); // "all" | YYYY-MM-DD
   const [club, setClub] = useState<string>("");
   const [range, setRange] = useState(12); // trend window in months
@@ -196,7 +204,7 @@ export function AnalyzeClient({
 
   const agg = aggs.find((a) => a.club === activeClub);
   const baseAgg = allAggs.find((a) => a.club === activeClub);
-  const bm = benchmarkForClub(activeClub);
+  const idealCarry = idealCarryForHcp(activeClub, refHcp);
   const clubShots = useMemo(
     () => splitMisses(allShots.filter((s: Shot) => s.club === activeClub)).clean,
     [allShots, activeClub]
@@ -364,13 +372,13 @@ export function AnalyzeClient({
 
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-xl font-bold text-ink">{activeClub}</h2>
-        {bm ? (
-          agg.carry.mean >= bm.b80 ? (
-            <Badge tone="good">break-80 carry</Badge>
-          ) : agg.carry.mean >= bm.b90 ? (
-            <Badge tone="warn">break-90 carry</Badge>
+        {idealCarry ? (
+          agg.carry.mean >= idealCarry ? (
+            <Badge tone="good">{t("aboveLevel")}</Badge>
+          ) : agg.carry.mean >= idealCarry * 0.93 ? (
+            <Badge tone="info">{t("onLevel")}</Badge>
           ) : (
-            <Badge tone="info">{t("buildingDistance")}</Badge>
+            <Badge tone="warn">{t("belowLevel")}</Badge>
           )
         ) : null}
         <Badge tone={shape.tone}>{shape.label}</Badge>
@@ -494,7 +502,9 @@ export function AnalyzeClient({
             }
             max={Number.isFinite(agg.carry.max) ? fmt(agg.carry.max) : undefined}
             ideal={
-              bm ? `break 90 ~${bm.b90} · break 80 ~${bm.b80}` : idl?.carry
+              idealCarry
+                ? `~${idealCarry} @ HCP ${fmt(refHcp)}`
+                : idl?.carry
             }
           />
           <StatCard

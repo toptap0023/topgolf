@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
-import { getSessionShots, getSessions } from "@/lib/data";
+import { getSessionShots, getSessions, getRounds } from "@/lib/data";
+import { estimateHandicap } from "@/lib/stats";
 import type { Shot } from "@/lib/types";
 import { AnalyzeClient } from "@/components/AnalyzeClient";
 import { EmptyState } from "@/components/ui";
@@ -9,10 +10,12 @@ import { TargetIcon, DownloadIcon } from "@/components/icons";
 export const revalidate = 60;
 
 export default async function AnalyzePage() {
-  const [sessionShots, sessions] = await Promise.all([
+  const [sessionShots, sessions, rounds] = await Promise.all([
     getSessionShots(),
     getSessions(),
+    getRounds(),
   ]);
+  const { hcp } = estimateHandicap(rounds);
 
   const hasShots = sessionShots.some((s) => s.shots.length > 0);
   if (!hasShots)
@@ -46,6 +49,7 @@ export default async function AnalyzePage() {
         sessionShots={lite}
         distanceUnit={sessions[0]?.distance_unit ?? "yds"}
         speedUnit={sessions[0]?.speed_unit ?? "mph"}
+        hcp={hcp}
       />
     </div>
   );
