@@ -372,7 +372,7 @@ export interface Tendency {
  * falling back to sidespin ≈100 rpm/deg, then face-to-path).
  * Tones: back-to-target shapes = good, straight-line offline = warn,
  * strong curves = bad. */
-const SHAPES = {
+export const SHAPE_INFO = {
   "Pull Hook": { tone: "bad", en: "Starts left, curves harder left", th: "ออกซ้ายแล้วโค้งซ้ายเพิ่ม" },
   "Pull Draw": { tone: "warn", en: "Starts left, drifts further left", th: "ออกซ้าย โค้งซ้ายเล็กน้อย" },
   Pull: { tone: "warn", en: "Straight flight, left of target", th: "ลูกตรงแต่ออกซ้ายทั้งลูก" },
@@ -388,7 +388,7 @@ const SHAPES = {
   "Push Fade": { tone: "warn", en: "Starts right, drifts further right", th: "ออกขวา โค้งขวาเล็กน้อย" },
   "Push Slice": { tone: "bad", en: "Starts right, curves harder right", th: "ออกขวาแล้วโค้งขวาเพิ่ม" },
 } as const;
-export type ShapeLabel = keyof typeof SHAPES;
+export type ShapeLabel = keyof typeof SHAPE_INFO;
 
 const START_DEG = 2; // |launch dir| beyond this = pull/push
 const CURVE_DEG = 2; // |curve| beyond this = draw/fade
@@ -443,7 +443,7 @@ export function shapeBreakdown(shots: Shot[]): ShapeCount[] {
       label,
       n,
       pct: (n / total) * 100,
-      tone: SHAPES[label].tone as Tone,
+      tone: SHAPE_INFO[label].tone as Tone,
     }))
     .sort((a, b) => b.n - a.n);
 }
@@ -472,7 +472,7 @@ export function shotShape(agg: ClubAgg): Tendency {
       detail: { en: "Not enough data", th: "ข้อมูลยังไม่พอ" },
       tone: "info",
     };
-  const s = SHAPES[label];
+  const s = SHAPE_INFO[label];
   return { label, detail: { en: s.en, th: s.th }, tone: s.tone as Tone };
 }
 

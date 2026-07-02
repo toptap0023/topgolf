@@ -17,6 +17,7 @@ import {
   splitMisses,
   benchmarkForClub,
   shapeBreakdown,
+  SHAPE_INFO,
 } from "@/lib/stats";
 import { CATEGORY_COLOR } from "@/lib/clubs";
 import {
@@ -381,26 +382,37 @@ export function AnalyzeClient({
 
       {/* One club hits many shapes — the mix tells more than the single badge. */}
       {shapes.length > 1 ? (
-        <p className="-mt-3 text-sm text-ink-muted">
-          {t("shapeMix")}:{" "}
-          {shapes.slice(0, 3).map((s, i) => (
-            <span key={s.label}>
-              {i > 0 ? " · " : ""}
-              <span
-                className={
-                  s.tone === "good"
-                    ? "text-good"
-                    : s.tone === "bad"
-                      ? "text-bad"
-                      : "text-warn"
-                }
-              >
-                {s.label}
-              </span>{" "}
-              <span className="tnum">{fmt(s.pct)}%</span>
-            </span>
-          ))}
-        </p>
+        <div className="-mt-3">
+          <p className="text-sm text-ink-muted">
+            {t("shapeMix")}:{" "}
+            {shapes.slice(0, 3).map((s, i) => (
+              <span key={s.label}>
+                {i > 0 ? " · " : ""}
+                <span
+                  className={
+                    s.tone === "good"
+                      ? "text-good"
+                      : s.tone === "bad"
+                        ? "text-bad"
+                        : "text-warn"
+                  }
+                >
+                  {s.label}
+                </span>{" "}
+                <span className="tnum">{fmt(s.pct)}%</span>
+              </span>
+            ))}
+          </p>
+          {/* Shape names stay EN jargon — Thai mode glosses them underneath. */}
+          {lang === "th" ? (
+            <p className="mt-0.5 text-xs text-ink-muted">
+              {shapes
+                .slice(0, 3)
+                .map((s) => `${s.label} = ${SHAPE_INFO[s.label].th}`)
+                .join(" · ")}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       {/* 1 — Coaching insights (most actionable first) */}
