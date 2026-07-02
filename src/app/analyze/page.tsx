@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
 import { getSessionShots, getSessions } from "@/lib/data";
 import type { Shot } from "@/lib/types";
@@ -40,7 +41,7 @@ export default async function AnalyzePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold text-ink">Analyze</h1>
+      <PageHeader page="analyze" />
       <AnalyzeClient
         sessionShots={lite}
         distanceUnit={sessions[0]?.distance_unit ?? "yds"}

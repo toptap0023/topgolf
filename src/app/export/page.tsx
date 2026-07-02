@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
 import { getAllShots, getSessions, getRounds } from "@/lib/data";
 import { aggregateByClub, overallKpis } from "@/lib/stats";
@@ -59,7 +60,7 @@ export default async function ExportPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold text-ink">Export</h1>
+      <PageHeader page="export" />
       <ExportClient
         allShotsCsv={allShotsCsv}
         clubCsv={clubCsv}
