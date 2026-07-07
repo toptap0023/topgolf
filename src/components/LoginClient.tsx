@@ -124,7 +124,7 @@ export default function LoginClient() {
           return; // keep pending state during full reload
         }
       } else if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -132,7 +132,11 @@ export default function LoginClient() {
           },
         });
         if (error) setError(error.message);
-        else setDone("signup");
+        else if (data.session) {
+          // Email confirmation is off → signed in immediately.
+          window.location.assign("/");
+          return;
+        } else setDone("signup"); // confirmation on → show check-email panel
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,

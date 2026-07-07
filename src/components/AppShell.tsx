@@ -48,9 +48,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
   const t = useT(L);
 
-  // Auth pages render bare — no nav to a session that doesn't exist yet.
+  // Auth pages render bare (own their full-screen layout) — no app nav to a
+  // session that doesn't exist yet.
   if (/^\/(login|reset-password|auth)(\/|$)/.test(pathname))
-    return <main className="mx-auto min-h-[100dvh] max-w-5xl px-4 py-6">{children}</main>;
+    return <>{children}</>;
 
   return (
     <div className="min-h-[100dvh]">
