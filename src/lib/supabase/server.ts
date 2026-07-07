@@ -15,7 +15,13 @@ export async function createClient() {
     {
       cookies: {
         getAll: () => store.getAll(),
-        setAll: (cookiesToSet) => {
+        setAll: (
+          cookiesToSet: {
+            name: string;
+            value: string;
+            options?: import("@supabase/ssr").CookieOptions;
+          }[]
+        ) => {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               store.set(name, value, options)
