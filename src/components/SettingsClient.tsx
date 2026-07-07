@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
+import { createClient } from "@/lib/supabase/client";
 import { clearAllData, revealPin } from "@/app/actions";
 import { useGoal } from "@/lib/goal";
 import { useT, useLang, type Dict } from "@/lib/i18n";
@@ -31,18 +32,14 @@ const L = {
   light: { en: "Light", th: "สว่าง" },
   system: { en: "System", th: "ตามระบบ" },
   privacy: { en: "Privacy", th: "ความเป็นส่วนตัว" },
-  privacyBody1: {
-    en: "Public by design · anyone with the link can view or upload data. No login page. Only ",
-    th: "เปิดสาธารณะ · ใครมีลิงก์ก็เข้าดู / อัปข้อมูลได้ ไม่มีหน้า login. มีแค่การ ",
+  privacyBody: {
+    en: "Your data is private · only your signed-in account can see or change it.",
+    th: "ข้อมูลเป็นส่วนตัว · เห็นและแก้ได้เฉพาะบัญชีที่ล็อกอินเท่านั้น",
   },
-  privacyBodyBold: {
-    en: "Clear all data",
-    th: "ลบข้อมูลทั้งหมด",
-  },
-  privacyBody2: {
-    en: " below requires a PIN, to prevent accidental deletion.",
-    th: " ด้านล่างเท่านั้นที่ต้องใส่ PIN เพื่อกันลบโดยไม่ตั้งใจ.",
-  },
+  account: { en: "Account", th: "บัญชี" },
+  signedInAs: { en: "Signed in as", th: "เข้าสู่ระบบเป็น" },
+  signOut: { en: "Sign out", th: "ออกจากระบบ" },
+  signingOut: { en: "Signing out…", th: "กำลังออกจากระบบ…" },
   dangerZone: { en: "Danger zone", th: "โซนอันตราย" },
   dangerSub: {
     en: "Permanently delete all sessions, shots, and rounds. This cannot be undone.",
@@ -53,6 +50,7 @@ const L = {
     th: "ใส่ PIN เพื่อยืนยันการลบทั้งหมด",
   },
   forgotPin: { en: "Forgot PIN?", th: "ลืม PIN?" },
+  recoveryCode: { en: "Recovery code", th: "รหัสกู้คืน" },
   viewPin: { en: "View PIN", th: "ดู PIN" },
   yourPinIs: { en: "Your PIN is", th: "PIN ของคุณคือ" },
   recoveryHint: {
@@ -75,6 +73,44 @@ const LANGS = [
   { key: "en", label: "English" },
   { key: "th", label: "ไทย" },
 ] as const;
+
+function AccountCard() {
+  const t = useT(L);
+  const [email, setEmail] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setEmail(data.user?.email ?? null);
+    });
+  }, []);
+
+  return (
+    <Card className="p-5">
+      <SectionTitle>{t("account")}</SectionTitle>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-muted">
+          {t("signedInAs")}{" "}
+          <span className="font-medium text-ink">{email ?? "…"}</span>
+        </p>
+        <button
+          type="button"
+          disabled={signingOut}
+          onClick={async () => {
+            setSigningOut(true);
+            const supabase = createClient();
+            await supabase.auth.signOut();
+            window.location.assign("/login");
+          }}
+          className="rounded-xl border border-line px-5 py-2.5 text-sm font-semibold text-ink transition-colors duration-200 hover:text-accent disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+        >
+          {signingOut ? t("signingOut") : t("signOut")}
+        </button>
+      </div>
+    </Card>
+  );
+}
 
 function GoalCard() {
   const t = useT(L);
@@ -101,6 +137,7 @@ function GoalCard() {
           <input
             type="number"
             inputMode="numeric"
+            autoComplete="off"
             value={s}
             onChange={(e) => setStart(e.target.value)}
             className={input}
@@ -112,6 +149,7 @@ function GoalCard() {
           <input
             type="number"
             inputMode="numeric"
+            autoComplete="off"
             value={tv}
             onChange={(e) => setTarget(e.target.value)}
             className={input}
@@ -177,6 +215,8 @@ export function SettingsClient() {
         </div>
       </Card>
 
+      <AccountCard />
+
       <GoalCard />
 
       <Card className="p-5">
@@ -205,16 +245,16 @@ export function SettingsClient() {
 
       <Card className="p-5">
         <SectionTitle>{t("privacy")}</SectionTitle>
-        <p className="text-sm text-ink-muted">
-          {t("privacyBody1")}
-          <b className="text-ink">{t("privacyBodyBold")}</b>
-          {t("privacyBody2")}
-        </p>
+        <p className="text-sm text-ink-muted">{t("privacyBody")}</p>
       </Card>
 
       <Card className="border-bad/30 p-5">
         <SectionTitle sub={t("dangerSub")}>{t("dangerZone")}</SectionTitle>
-        {error ? <p className="mb-2 text-sm text-bad">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="mb-2 text-sm text-bad">
+            {error}
+          </p>
+        ) : null}
         {confirm ? (
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
@@ -248,6 +288,7 @@ export function SettingsClient() {
                     type="password"
                     inputMode="numeric"
                     autoComplete="off"
+                    aria-label={t("recoveryCode")}
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     placeholder="••••"

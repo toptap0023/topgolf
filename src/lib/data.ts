@@ -3,7 +3,7 @@ import type { GolfSession, Shot, GolfRound } from "./types";
 import type { SessionShots } from "./stats";
 
 export async function getSessions(): Promise<GolfSession[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("golf_sessions")
     .select("*")
@@ -14,7 +14,7 @@ export async function getSessions(): Promise<GolfSession[]> {
 }
 
 export async function getSession(id: string): Promise<GolfSession | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("golf_sessions")
     .select("*")
@@ -25,7 +25,7 @@ export async function getSession(id: string): Promise<GolfSession | null> {
 }
 
 export async function getShotsForSession(sessionId: string): Promise<Shot[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("golf_shots")
     .select("*")
@@ -36,7 +36,7 @@ export async function getShotsForSession(sessionId: string): Promise<Shot[]> {
 }
 
 export async function getAllShots(): Promise<Shot[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("golf_shots")
     .select("*")
@@ -47,7 +47,7 @@ export async function getAllShots(): Promise<Shot[]> {
 }
 
 export async function getRounds(): Promise<GolfRound[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("golf_rounds")
     .select("*")
@@ -58,7 +58,7 @@ export async function getRounds(): Promise<GolfRound[]> {
 
 /** Sessions (chronological asc) each with their shots · for trend charts. */
 export async function getSessionShots(): Promise<SessionShots[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const [sessionsRes, shotsRes] = await Promise.all([
     supabase
       .from("golf_sessions")

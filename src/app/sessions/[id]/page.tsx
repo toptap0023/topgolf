@@ -4,7 +4,6 @@ import { aggregateByClub, overallKpis, dispersionFor, fatigueCurve } from "@/lib
 import type { Shot } from "@/lib/types";
 import { SessionDetailClient } from "@/components/SessionDetailClient";
 
-export const revalidate = 60;
 
 export default async function SessionDetailPage({
   params,

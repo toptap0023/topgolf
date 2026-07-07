@@ -3,7 +3,6 @@ import { getSessions, getAllShots } from "@/lib/data";
 import { statOf } from "@/lib/stats";
 import { SessionsListClient } from "@/components/SessionsListClient";
 
-export const revalidate = 60;
 
 export default async function SessionsPage() {
   const [sessions, shots] = await Promise.all([getSessions(), getAllShots()]);

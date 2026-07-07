@@ -31,7 +31,7 @@ export async function importSession(
   try {
     if (!payload.shots.length)
       return { error: "No shots to import / ไม่มีช็อตให้นำเข้า" };
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: ses, error: e1 } = await supabase
       .from("golf_sessions")
@@ -69,7 +69,7 @@ export async function importSession(
 }
 
 export async function deleteSession(id: string): Promise<{ error?: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("golf_sessions").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidateAll();
@@ -91,7 +91,7 @@ export interface RoundPayload {
 export async function addRound(
   payload: RoundPayload
 ): Promise<{ error?: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("golf_rounds").insert(payload);
   if (error) return { error: error.message };
   revalidatePath("/rounds");
@@ -104,7 +104,7 @@ export async function importRounds(
 ): Promise<{ count?: number; error?: string }> {
   if (!rounds.length)
     return { error: "No rounds to import / ไม่มีรอบให้นำเข้า" };
-  const supabase = createClient();
+  const supabase = await createClient();
   const payload = rounds.map((r) => ({
     played_on: r.played_on || undefined,
     course: r.course,
@@ -124,7 +124,7 @@ export async function importRounds(
 }
 
 export async function deleteRound(id: string): Promise<{ error?: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("golf_rounds").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/rounds");
@@ -135,7 +135,7 @@ export async function deleteRound(id: string): Promise<{ error?: string }> {
 export async function clearAllData(pin: string): Promise<{ error?: string }> {
   if (process.env.APP_PASSCODE && pin !== process.env.APP_PASSCODE)
     return { error: "Wrong PIN / PIN ไม่ถูกต้อง" };
-  const supabase = createClient();
+  const supabase = await createClient();
   // shots cascade from sessions, but delete explicitly to be safe.
   await supabase.from("golf_shots").delete().neq("id", ALL);
   const { error: e1 } = await supabase

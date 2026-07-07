@@ -8,7 +8,6 @@ import {
 import { buildCoachPrompt } from "@/lib/csv";
 import { DashboardClient } from "@/components/DashboardClient";
 
-export const revalidate = 60;
 
 export default async function DashboardPage() {
   const [shots, rounds, sessions] = await Promise.all([

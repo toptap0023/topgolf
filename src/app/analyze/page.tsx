@@ -7,7 +7,6 @@ import { AnalyzeClient } from "@/components/AnalyzeClient";
 import { EmptyState } from "@/components/ui";
 import { TargetIcon, DownloadIcon } from "@/components/icons";
 
-export const revalidate = 60;
 
 export default async function AnalyzePage() {
   const [sessionShots, sessions, rounds] = await Promise.all([

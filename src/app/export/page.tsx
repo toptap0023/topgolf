@@ -8,7 +8,6 @@ import { ExportClient } from "@/components/ExportClient";
 import { EmptyState } from "@/components/ui";
 import { UploadIcon, DownloadIcon } from "@/components/icons";
 
-export const revalidate = 60;
 export const metadata = { title: "Export · TOPgolfer" };
 
 export default async function ExportPage() {

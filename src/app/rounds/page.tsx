@@ -3,7 +3,6 @@ import { getRounds } from "@/lib/data";
 import { RoundsClient } from "@/components/RoundsClient";
 import { RoundsImport } from "@/components/RoundsImport";
 
-export const revalidate = 60;
 export const metadata = { title: "Rounds · TOPgolfer" };
 
 export default async function RoundsPage() {

@@ -117,6 +117,7 @@ export function buildCoachPrompt(opts: {
   speedUnit: SpeedUnit;
   currentScore?: number | null;
   targetScore?: number;
+  scopeNote?: string;
 }): string {
   const { aggs, kpis, rounds, distanceUnit, speedUnit } = opts;
   const target = opts.targetScore ?? 85;
@@ -146,7 +147,7 @@ export function buildCoachPrompt(opts: {
 
 My goal: lower my 18-hole score from about ${current ?? 105} to ${target}.
 
-Below is a summary of my Garmin Approach R10 launch-monitor practice data. Distances are in ${d}, speeds in ${sp}. "Carry σ" is the standard deviation of carry distance (lower = more consistent). "Side" is the average lateral miss (+ = right, − = left). "Shape" is my typical shot pattern.
+${opts.scopeNote ? `${opts.scopeNote}\n\n` : ""}Below is a summary of my Garmin Approach R10 launch-monitor practice data. Distances are in ${d}, speeds in ${sp}. "Carry σ" is the standard deviation of carry distance (lower = more consistent). "Side" is the average lateral miss (+ = right, − = left). "Shape" is my typical shot pattern.
 
 Headline numbers: ${kpis.shots} shots across ${kpis.clubs} clubs; longest carry ${
     kpis.longestCarry ? `${Math.round(kpis.longestCarry.value)} ${d} (${kpis.longestCarry.club})` : "n/a"
