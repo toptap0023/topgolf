@@ -21,3 +21,6 @@ next-env.d.ts
 # vercel
 .vercel
 worktrees/
+
+# Local preview config
+.claude/
