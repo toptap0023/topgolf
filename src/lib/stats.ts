@@ -149,6 +149,18 @@ export function splitMisses(shots: Shot[]): {
   return { clean, missCount, missRate: (missCount / withCarry.length) * 100 };
 }
 
+/** Clean shots across all clubs · mishits/warm-ups dropped per-club. */
+export function cleanShots(shots: Shot[]): Shot[] {
+  const groups = new Map<string, Shot[]>();
+  for (const s of shots) {
+    const k = s.club ?? "Unknown";
+    const g = groups.get(k);
+    if (g) g.push(s);
+    else groups.set(k, [s]);
+  }
+  return [...groups.values()].flatMap((g) => splitMisses(g).clean);
+}
+
 export interface ClubAgg {
   club: string;
   category: ClubCategory;

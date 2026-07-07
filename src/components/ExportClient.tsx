@@ -6,7 +6,7 @@ import { useGoal } from "@/lib/goal";
 import { Card, SectionTitle } from "./ui";
 import { DownloadIcon, CopyIcon, CheckIcon } from "./icons";
 import type { Shot, GolfSession, GolfRound } from "@/lib/types";
-import { aggregateByClub, overallKpis } from "@/lib/stats";
+import { aggregateByClub, overallKpis, cleanShots } from "@/lib/stats";
 import { shotsToCsv, clubTableCsv, roundsToCsv, buildCoachPrompt } from "@/lib/csv";
 
 const L = {
@@ -46,8 +46,8 @@ const L = {
   copiedShort: { en: "Copied", th: "คัดลอกแล้ว" },
   coachTitle: { en: "AI coach prompt", th: "Prompt โค้ช AI" },
   coachSub: {
-    en: "A ready-made prompt with your stats built in · paste into Gemini, ChatGPT, or Claude for a personalized plan.",
-    th: "Prompt สำเร็จรูปพร้อมสถิติของคุณ · วางใน Gemini, ChatGPT หรือ Claude เพื่อรับแผนซ้อมเฉพาะตัว",
+    en: "A ready-made prompt with per-club averages AND every clean shot (mishits/warm-ups removed) · paste into Gemini, ChatGPT, or Claude for a personalized plan.",
+    th: "Prompt สำเร็จรูป มีทั้งค่าเฉลี่ยรายไม้ และรายช็อตทุกลูก (ตัด mishit/วอร์มมือออกแล้ว) · วางใน Gemini, ChatGPT หรือ Claude เพื่อรับแผนซ้อมเฉพาะตัว",
   },
   copyCoach: { en: "Copy AI coach prompt", th: "คัดลอก prompt โค้ช AI" },
   copied: { en: "Copied!", th: "คัดลอกแล้ว!" },
@@ -203,6 +203,7 @@ export function ExportClient({
         speedUnit,
         currentScore: current,
         targetScore: target,
+        shots: cleanShots(scopedShots),
         scopeNote:
           day !== "all"
             ? `This is a single practice session on ${day}. Focus your feedback on today's numbers and what to work on next session.`

@@ -118,6 +118,7 @@ export function buildCoachPrompt(opts: {
   currentScore?: number | null;
   targetScore?: number;
   scopeNote?: string;
+  shots?: Shot[]; // clean per-shot rows (mishits already removed)
 }): string {
   const { aggs, kpis, rounds, distanceUnit, speedUnit } = opts;
   const target = opts.targetScore ?? 85;
@@ -143,6 +144,31 @@ export function buildCoachPrompt(opts: {
     })
     .join("\n");
 
+  // Per-shot detail (clean shots only). Capped so the prompt stays reasonable;
+  // for a single day that's the whole session, for all-time it's the newest.
+  const SHOT_CAP = 150;
+  const shots = opts.shots ?? [];
+  const shown = shots.slice(-SHOT_CAP);
+  const g = (n: number | null | undefined, dig = 1) =>
+    n != null && Number.isFinite(n)
+      ? (Math.round(n * 10 ** dig) / 10 ** dig).toString()
+      : "–";
+  const shotSection = shown.length
+    ? `
+
+Per-shot detail (mishits and warm-up swings already removed${
+        shots.length > shown.length ? `; newest ${shown.length} of ${shots.length} shown` : ""
+      }):
+| # | Club | Carry ${d} | Total ${d} | Ball ${sp} | Smash | Launch° | Spin | Side ${d} (+R/−L) | Path° | Face° |
+|---|---|---|---|---|---|---|---|---|---|---|
+${shown
+        .map((s, i) => {
+          const side = s.carry_deviation_distance ?? s.total_deviation_distance;
+          return `| ${i + 1} | ${s.club ?? "–"} | ${g(s.carry_distance, 0)} | ${g(s.total_distance, 0)} | ${g(s.ball_speed, 1)} | ${g(s.smash_factor, 2)} | ${g(s.launch_angle, 1)} | ${g(s.spin_rate, 0)} | ${g(side, 1)} | ${g(s.club_path, 1)} | ${g(s.club_face, 1)} |`;
+        })
+        .join("\n")}`
+    : "";
+
   return `You are an expert PGA golf coach and launch-monitor analyst.
 
 My goal: lower my 18-hole score from about ${current ?? 105} to ${target}.
@@ -157,6 +183,7 @@ ${recentScores ? `Recent rounds · ${recentScores}.` : ""}
 Per-club data:
 ${tableHeader}
 ${tableRows}
+${shotSection}
 
 Please analyze and give me:
 1. The 3 biggest weaknesses holding my score back (cite the numbers).
