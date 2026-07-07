@@ -18,9 +18,7 @@ import {
   idealCarryForHcp,
   shapeBreakdown,
   SHAPE_INFO,
-  overallKpis,
 } from "@/lib/stats";
-import { buildCoachPrompt } from "@/lib/csv";
 import { CATEGORY_COLOR } from "@/lib/clubs";
 import {
   fmt,
@@ -50,10 +48,6 @@ const L = {
   more: { en: "More", th: "เพิ่มเติม" },
   selectClub: { en: "Select club", th: "เลือกไม้" },
   shots: { en: "shots", th: "ช็อต" },
-  aiCoach: { en: "AI Coach", th: "ปรึกษา AI" },
-  copyDay: { en: "Copy this day's prompt", th: "คัดลอกพรอมป์วันนี้" },
-  copyAll: { en: "Copy full prompt", th: "คัดลอกพรอมป์ทั้งหมด" },
-  copied: { en: "Copied ✓", th: "คัดลอกแล้ว ✓" },
   aboveLevel: { en: "above HCP level", th: "เกินระดับ HCP" },
   onLevel: { en: "at HCP level", th: "ตามระดับ HCP" },
   belowLevel: { en: "below HCP level", th: "ต่ำกว่าระดับ HCP" },
@@ -184,7 +178,6 @@ export function AnalyzeClient({
   const [day, setDay] = useState<string>("all"); // "all" | YYYY-MM-DD
   const [club, setClub] = useState<string>("");
   const [range, setRange] = useState(12); // trend window in months
-  const [copied, setCopied] = useState(false);
 
   // Dates that actually have sessions, newest first · drives the day pills.
   const dates = useMemo(() => {
@@ -281,30 +274,6 @@ export function AnalyzeClient({
   const smashEff = agg.smash.n ? (agg.smash.mean / agg.smashIdeal) * 100 : NaN;
   const dispRadius = Math.hypot(disp.sdX, disp.sdY);
   const aoaIdeal = agg.category === "Driver" ? "+2–5°" : "≤ 0°";
-
-  // Copy an AI-coach prompt scoped to the current view (one day, or all data).
-  const copyCoachPrompt = async () => {
-    const prompt = buildCoachPrompt({
-      aggs,
-      kpis: overallKpis(allShots),
-      rounds: [],
-      distanceUnit,
-      speedUnit,
-      targetScore: target,
-      scopeNote:
-        day !== "all"
-          ? `This is a single practice session on ${day}. Focus your feedback on today's numbers and what to work on next session.`
-          : undefined,
-    });
-    try {
-      await navigator.clipboard.writeText(prompt);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // ponytail: clipboard blocked (insecure context) → surface the text to copy manually
-      window.prompt("Copy this prompt:", prompt);
-    }
-  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -418,28 +387,6 @@ export function AnalyzeClient({
           · {agg.count} {t("shots")}
           {day !== "all" ? ` · ${dayLabel(day)}` : ""}
         </span>
-        <button
-          type="button"
-          onClick={copyCoachPrompt}
-          title={day !== "all" ? t("copyDay") : t("copyAll")}
-          className="ml-auto flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-accent bg-accent/10 px-3 py-1.5 text-sm font-medium text-accent transition-colors duration-200 hover:bg-accent/20"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="M9 3h6a2 2 0 0 1 2 2v0H7v0a2 2 0 0 1 2-2Z" />
-            <rect x="7" y="5" width="10" height="16" rx="2" />
-            <path d="M10 10h4M10 14h4" />
-          </svg>
-          {copied ? t("copied") : t("aiCoach")}
-        </button>
       </div>
 
       {/* One club hits many shapes · the mix tells more than the single badge. */}

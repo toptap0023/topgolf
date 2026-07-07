@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useT, type Dict } from "@/lib/i18n";
+import { useGoal } from "@/lib/goal";
 import { Card, SectionTitle } from "./ui";
 import { DownloadIcon, CopyIcon, CheckIcon } from "./icons";
+import type { Shot, GolfSession, GolfRound } from "@/lib/types";
+import { aggregateByClub, overallKpis } from "@/lib/stats";
+import { shotsToCsv, clubTableCsv, roundsToCsv, buildCoachPrompt } from "@/lib/csv";
 
 const L = {
   exportCsv: { en: "Export CSV", th: "ส่งออก CSV" },
@@ -11,6 +15,13 @@ const L = {
     en: "Download to a file, or copy straight to your clipboard to paste into any AI / spreadsheet.",
     th: "ดาวน์โหลดเป็นไฟล์ หรือคัดลอกไปวางใน AI / สเปรดชีตอะไรก็ได้",
   },
+  dayFilter: { en: "Day", th: "วัน" },
+  allDays: { en: "All sessions", th: "ทุกวัน" },
+  dayScopeNote: {
+    en: "Shots CSV, club summary & AI prompt use the selected day. Rounds always export in full.",
+    th: "CSV ช็อต, สรุปรายไม้ และ prompt AI ใช้เฉพาะวันที่เลือก · Rounds ส่งออกครบทุกครั้ง",
+  },
+  shotsWord: { en: "shots", th: "ช็อต" },
   clubSummaryTitle: { en: "Club summary (every club)", th: "สรุปรายไม้ (ทุกไม้)" },
   clubSummaryDesc: {
     en: "Per-club averages: carry, dispersion, smash, launch, spin, path, face, shape.",
@@ -130,24 +141,79 @@ function ExportRow({
   );
 }
 
+// Human day label from YYYY-MM-DD (built at noon UTC to dodge tz off-by-one).
+function dayLabel(d: string) {
+  return new Date(`${d}T12:00:00`).toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export function ExportClient({
-  allShotsCsv,
-  clubCsv,
-  roundsCsv,
-  coachPrompt,
-  shotCount,
-  roundCount,
+  shots,
+  sessions,
+  rounds,
 }: {
-  allShotsCsv: string;
-  clubCsv: string;
-  roundsCsv: string;
-  coachPrompt: string;
-  shotCount: number;
-  roundCount: number;
+  shots: Shot[];
+  sessions: GolfSession[];
+  rounds: GolfRound[];
 }) {
   const t = useT(L);
+  const [{ target }] = useGoal();
   const [copied, setCopied] = useState(false);
   const [show, setShow] = useState(false);
+  const [day, setDay] = useState("all"); // "all" | YYYY-MM-DD
+
+  const byId = useMemo(
+    () => Object.fromEntries(sessions.map((s) => [s.id, s])),
+    [sessions]
+  );
+  // Days that actually have practice sessions, newest first.
+  const dates = useMemo(() => {
+    const set = new Set(sessions.filter((s) => s.played_on).map((s) => s.played_on));
+    return [...set].sort((a, b) => (a < b ? 1 : -1));
+  }, [sessions]);
+
+  // Shots scoped to the chosen day (via their session's played_on).
+  const scopedShots = useMemo(
+    () =>
+      day === "all"
+        ? shots
+        : shots.filter((s) => byId[s.session_id]?.played_on === day),
+    [shots, byId, day]
+  );
+
+  const distanceUnit = sessions[0]?.distance_unit ?? "yds";
+  const speedUnit = sessions[0]?.speed_unit ?? "mph";
+  const current = rounds.find((r) => r.score != null)?.score ?? null;
+
+  // Rebuild exports for the current scope. Rounds stay full (separate data).
+  const { clubCsv, allShotsCsv, roundsCsv, coachPrompt } = useMemo(() => {
+    const aggs = aggregateByClub(scopedShots);
+    return {
+      clubCsv: clubTableCsv(aggs, distanceUnit, speedUnit),
+      allShotsCsv: shotsToCsv(scopedShots, byId),
+      roundsCsv: roundsToCsv(rounds),
+      coachPrompt: buildCoachPrompt({
+        aggs,
+        kpis: overallKpis(scopedShots),
+        rounds,
+        distanceUnit,
+        speedUnit,
+        currentScore: current,
+        targetScore: target,
+        scopeNote:
+          day !== "all"
+            ? `This is a single practice session on ${day}. Focus your feedback on today's numbers and what to work on next session.`
+            : undefined,
+      }),
+    };
+  }, [scopedShots, byId, rounds, distanceUnit, speedUnit, current, target, day]);
+
+  const shotCount = scopedShots.length;
+  const roundCount = rounds.length;
+  const tag = day === "all" ? stamp() : day; // filename date suffix
 
   async function copyPrompt() {
     if (await copyText(coachPrompt)) {
@@ -163,18 +229,43 @@ export function ExportClient({
     <div className="flex flex-col gap-5">
       <Card className="flex flex-col gap-3 p-5">
         <SectionTitle sub={t("exportCsvSub")}>{t("exportCsv")}</SectionTitle>
+
+        {/* Day scope · shots CSV, club summary & AI prompt honour this. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="export-day" className="text-sm font-medium text-ink-muted">
+            {t("dayFilter")}
+          </label>
+          <select
+            id="export-day"
+            value={day}
+            onChange={(e) => setDay(e.target.value)}
+            className="cursor-pointer rounded-lg border border-line bg-bg-panel px-3 py-1.5 text-sm font-medium text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+          >
+            <option value="all">{t("allDays")}</option>
+            {dates.map((dd) => (
+              <option key={dd} value={dd}>
+                {dayLabel(dd)}
+              </option>
+            ))}
+          </select>
+          {day !== "all" ? (
+            <span className="text-xs text-ink-muted">· {shotCount} {t("shotsWord")}</span>
+          ) : null}
+        </div>
+        <p className="-mt-1 text-xs text-ink-muted">{t("dayScopeNote")}</p>
+
         <ExportRow
           title={t("clubSummaryTitle")}
           desc={t("clubSummaryDesc")}
           content={clubCsv}
-          filename={`topgolfer-club-summary-${stamp()}.csv`}
+          filename={`topgolfer-club-summary-${tag}.csv`}
           disabled={shotCount === 0}
         />
         <ExportRow
           title={t("allShotsTitle")}
           desc={t("allShotsDesc").replace("{n}", String(shotCount))}
           content={allShotsCsv}
-          filename={`topgolfer-shots-${stamp()}.csv`}
+          filename={`topgolfer-shots-${tag}.csv`}
           disabled={shotCount === 0}
         />
         <ExportRow

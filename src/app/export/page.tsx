@@ -1,9 +1,6 @@
 import { PageHeader } from "@/components/PageHeader";
 import Link from "next/link";
 import { getAllShots, getSessions, getRounds } from "@/lib/data";
-import { aggregateByClub, overallKpis } from "@/lib/stats";
-import { shotsToCsv, clubTableCsv, roundsToCsv, buildCoachPrompt } from "@/lib/csv";
-import type { GolfSession } from "@/lib/types";
 import { ExportClient } from "@/components/ExportClient";
 import { EmptyState } from "@/components/ui";
 import { UploadIcon, DownloadIcon } from "@/components/icons";
@@ -35,39 +32,11 @@ export default async function ExportPage() {
       />
     );
 
-  const byId: Record<string, GolfSession> = Object.fromEntries(
-    sessions.map((s) => [s.id, s])
-  );
-  const aggs = aggregateByClub(shots);
-  const kpis = overallKpis(shots);
-  const distanceUnit = sessions[0]?.distance_unit ?? "yds";
-  const speedUnit = sessions[0]?.speed_unit ?? "mph";
-  const current = rounds.find((r) => r.score != null)?.score ?? null;
-
-  const allShotsCsv = shotsToCsv(shots, byId);
-  const clubCsv = clubTableCsv(aggs, distanceUnit, speedUnit);
-  const roundsCsv = roundsToCsv(rounds);
-  const coachPrompt = buildCoachPrompt({
-    aggs,
-    kpis,
-    rounds,
-    distanceUnit,
-    speedUnit,
-    currentScore: current,
-    targetScore: 85,
-  });
-
+  // Client filters/rebuilds CSVs + prompt per selected day, so hand it the raw data.
   return (
     <div className="flex flex-col gap-4">
       <PageHeader page="export" />
-      <ExportClient
-        allShotsCsv={allShotsCsv}
-        clubCsv={clubCsv}
-        roundsCsv={roundsCsv}
-        coachPrompt={coachPrompt}
-        shotCount={shots.length}
-        roundCount={rounds.length}
-      />
+      <ExportClient shots={shots} sessions={sessions} rounds={rounds} />
     </div>
   );
 }
