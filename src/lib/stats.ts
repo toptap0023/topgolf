@@ -878,3 +878,117 @@ export function twoWayMiss(shots: Shot[]): {
   const rightPct = n ? (right / n) * 100 : 0;
   return { leftPct, rightPct, twoWay: leftPct >= 25 && rightPct >= 25, n };
 }
+
+/* --------------------------- day swing verdict --------------------------- */
+export interface SwingNote {
+  text: string; // EN
+  th: string;
+  tone: Tone;
+}
+export interface SwingVerdict {
+  n: number; // clean shots analysed
+  issues: SwingNote[]; // 0–2, ranked biggest-lever first
+  strength: SwingNote | null; // one thing that's already good
+}
+
+const meanOf = (xs: number[]) =>
+  xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN;
+
+/**
+ * One bag-wide "what was my swing doing today" verdict from a session's shots.
+ * Face/path are pooled across the whole bag (a hand tendency); attack angle is
+ * grouped (Driver hits up, everything off the turf hits down) so they don't
+ * cancel. Mishits and clubs/groups with <MIN_SHOTS_FOR_MISS shots are dropped.
+ * Surfaces the top 1–2 issues (face → path → contact → strike) plus one
+ * strength; stays quiet when values are near neutral. Pure logic, no AI.
+ */
+export function swingVerdict(shots: Shot[]): SwingVerdict {
+  // Clean shots per club (same mishit rule as everywhere else), then pooled.
+  const byClub = new Map<string, Shot[]>();
+  for (const s of shots) {
+    const k = s.club ?? "Unknown";
+    (byClub.get(k) ?? byClub.set(k, []).get(k)!).push(s);
+  }
+  const clean: Shot[] = [];
+  for (const gs of byClub.values()) clean.push(...splitMisses(gs).clean);
+  const n = clean.length;
+  if (n < MIN_SHOTS_FOR_MISS)
+    return { n, issues: [], strength: null };
+
+  const face = meanOf(clean.map((s) => s.club_face).filter(Number.isFinite as (v: number | null) => v is number));
+  const path = meanOf(clean.map((s) => s.club_path).filter(Number.isFinite as (v: number | null) => v is number));
+
+  // Attack angle, grouped: Driver wants +, off-the-turf wants ≤0.
+  const aoaOf = (pred: (c: ClubCategory) => boolean) => {
+    const xs = clean
+      .filter((s) => pred(s.club_category ?? categoryOf(s.club)))
+      .map((s) => s.attack_angle)
+      .filter(Number.isFinite as (v: number | null) => v is number);
+    return xs.length >= MIN_SHOTS_FOR_MISS ? meanOf(xs) : NaN;
+  };
+  const drvAoa = aoaOf((c) => c === "Driver");
+  const ironAoa = aoaOf((c) => c === "Iron" || c === "Wedge");
+
+  // Contact: worst smash deficit vs the club-type ideal.
+  let worstSmash: { club: string; deficit: number; smash: number } | null = null;
+  for (const [club, gs] of byClub) {
+    const cl = splitMisses(gs).clean;
+    const sm = statOf(col(cl, "smash_factor"));
+    if (sm.n < MIN_SHOTS_FOR_MISS) continue;
+    const ideal = SMASH_IDEAL[cl[0]?.club_category ?? categoryOf(club)];
+    const deficit = sm.mean - ideal;
+    if (!worstSmash || deficit < worstSmash.deficit)
+      worstSmash = { club, deficit, smash: sm.mean };
+  }
+
+  // Ranked candidate issues (biggest lever first).
+  const cand: SwingNote[] = [];
+  if (Number.isFinite(face) && Math.abs(face) >= 3) {
+    const open = face > 0;
+    cand.push({
+      text: `Clubface averages ${Math.abs(face).toFixed(0)}° ${open ? "open (aims right)" : "closed (aims left)"} across the bag — the biggest lever. ${open ? "Release/rotate the face more through impact." : "Check grip; keep the face from flipping shut."}`,
+      th: `หน้าไม้เฉลี่ย${open ? "เปิด" : "ปิด"} ${Math.abs(face).toFixed(0)}° ทั้งถุง (เล็ง${open ? "ขวา" : "ซ้าย"}) — คันโยกใหญ่สุด ${open ? "ปล่อย/พลิกหน้าไม้ให้มากขึ้นตอนปะทะ" : "เช็คกริป อย่าให้หน้าไม้พลิกปิด"}`,
+      tone: "bad",
+    });
+  }
+  if (Number.isFinite(path) && Math.abs(path) >= 2) {
+    const inToOut = path > 0;
+    cand.push({
+      text: `Swing path is ${Math.abs(path).toFixed(1)}° ${inToOut ? "in-to-out (pushy)" : "out-to-in (over the top)"}. ${inToOut ? "Calm the path toward neutral." : "Feel more in-to-out and shallow the downswing."}`,
+      th: `วงสวิง ${Math.abs(path).toFixed(1)}° ${inToOut ? "ออก-เข้า (พุช)" : "เข้า-ออก (over the top)"} ${inToOut ? "ปรับ path ให้กลางขึ้น" : "ฝึกฟีล in-to-out และ shallow ขาลง"}`,
+      tone: inToOut ? "warn" : "bad",
+    });
+  }
+  if (worstSmash && worstSmash.deficit < -0.08) {
+    cand.push({
+      text: `Weakest contact on ${worstSmash.club} (smash ${worstSmash.smash.toFixed(2)}) — centre-strike work here pays off most.`,
+      th: `โดนหน้าไม้แย่สุดที่ ${worstSmash.club} (smash ${worstSmash.smash.toFixed(2)}) — ฝึกโดนกลางหน้าไม้ที่ไม้นี้คุ้มสุด`,
+      tone: "bad",
+    });
+  }
+  if (Number.isFinite(drvAoa) && drvAoa < 0)
+    cand.push({
+      text: `Hitting down on the driver (${drvAoa.toFixed(1)}°) — tee it higher and hit up (+) for easy distance.`,
+      th: `ตีลงใส่ไดรเวอร์ (${drvAoa.toFixed(1)}°) — ตั้งทีสูงขึ้นแล้วตีขึ้น (+) ได้ระยะฟรี`,
+      tone: "warn",
+    });
+  else if (Number.isFinite(ironAoa) && ironAoa > 1)
+    cand.push({
+      text: `Hitting up on the irons (${ironAoa > 0 ? "+" : ""}${ironAoa.toFixed(1)}°) — you're catching them thin. Feel ball-first, divot after.`,
+      th: `ตีขึ้นกับเหล็ก (${ironAoa > 0 ? "+" : ""}${ironAoa.toFixed(1)}°) — โดนบาง ฝึกโดนลูกก่อนแล้วค่อยลงดิน`,
+      tone: "warn",
+    });
+
+  // One genuine strength (first that qualifies).
+  let strength: SwingNote | null = null;
+  if (Number.isFinite(face) && Math.abs(face) < 2)
+    strength = { text: "Clubface is square through impact — nice and neutral.", th: "หน้าไม้ตรงตอนปะทะ นิ่งดี", tone: "good" };
+  else if (Number.isFinite(path) && Math.abs(path) < 2)
+    strength = { text: "Swing path is neutral — a good foundation.", th: "วงสวิงกลาง เป็นฐานที่ดี", tone: "good" };
+  else if (Number.isFinite(ironAoa) && ironAoa <= 0 && ironAoa >= -5)
+    strength = { text: "Ball-first strike on the irons (down and through).", th: "เหล็กตีลงโดนลูกก่อนดิน (ดี)", tone: "good" };
+  else if (worstSmash && worstSmash.deficit >= -0.03)
+    strength = { text: "Solid centre contact across the bag.", th: "โดนกลางหน้าไม้ดีทั้งถุง", tone: "good" };
+
+  return { n, issues: cand.slice(0, 2), strength };
+}

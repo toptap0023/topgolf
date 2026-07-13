@@ -1,6 +1,12 @@
 import { notFound } from "next/navigation";
 import { getSession, getShotsForSession } from "@/lib/data";
-import { aggregateByClub, overallKpis, dispersionFor, fatigueCurve } from "@/lib/stats";
+import {
+  aggregateByClub,
+  overallKpis,
+  dispersionFor,
+  fatigueCurve,
+  swingVerdict,
+} from "@/lib/stats";
 import type { Shot } from "@/lib/types";
 import { SessionDetailClient } from "@/components/SessionDetailClient";
 
@@ -33,6 +39,7 @@ export default async function SessionDetailPage({
       disp={disp}
       topClub={topClub}
       fatigue={fatigueCurve(shots)}
+      verdict={swingVerdict(shots)}
     />
   );
 }

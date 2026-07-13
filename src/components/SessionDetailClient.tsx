@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import type { ClubAgg, Kpis, Dispersion, FatiguePoint } from "@/lib/stats";
+import type {
+  ClubAgg,
+  Kpis,
+  Dispersion,
+  FatiguePoint,
+  SwingVerdict,
+} from "@/lib/stats";
 import type { GolfSession, Shot } from "@/lib/types";
 import { FatigueChart } from "@/components/FatigueChart";
 import { CATEGORY_COLOR } from "@/lib/clubs";
@@ -10,7 +16,7 @@ import { Card, SectionTitle, StatCard } from "@/components/ui";
 import { ClubTable } from "@/components/ClubTable";
 import { DispersionChart } from "@/components/DispersionChart";
 import { DeleteSessionButton } from "@/components/DeleteSessionButton";
-import { useT, type Dict } from "@/lib/i18n";
+import { useT, useLang, type Dict } from "@/lib/i18n";
 
 const L = {
   back: { en: "← Sessions", th: "← เซสชัน" },
@@ -28,7 +34,28 @@ const L = {
   mostHit: { en: "most hit this session", th: "ตีบ่อยสุดในเซสชันนี้" },
   allShots: { en: "All shots", th: "ช็อตทั้งหมด" },
   shotsLower: { en: "shots", th: "ช็อต" },
+  swingTitle: { en: "Swing today", th: "วงสวิงวันนี้" },
+  swingSub: {
+    en: "Bag-wide read from this session — biggest lever first",
+    th: "อ่านวงรวมทั้งถุงจากเซสชันนี้ · เรื่องที่ได้ผลสุดก่อน",
+  },
+  swingClean: {
+    en: "Solid session — nothing glaring in your swing today. Keep grooving it.",
+    th: "วันนี้วงนิ่ง ไม่มีอะไรน่าห่วง รักษาไว้",
+  },
+  swingThin: {
+    en: "Hit a few more shots per club to get a swing read.",
+    th: "ตีเพิ่มอีกนิดต่อไม้ เพื่อให้อ่านวงได้",
+  },
+  swingFrom: { en: "from", th: "จาก" },
 } satisfies Dict;
+
+const TONE_DOT: Record<string, string> = {
+  bad: "bg-bad",
+  warn: "bg-warn",
+  good: "bg-good",
+  info: "bg-ink-muted",
+};
 
 export function SessionDetailClient({
   session,
@@ -38,6 +65,7 @@ export function SessionDetailClient({
   disp,
   topClub,
   fatigue,
+  verdict,
 }: {
   session: GolfSession;
   shots: Shot[];
@@ -46,10 +74,13 @@ export function SessionDetailClient({
   disp: Dispersion;
   topClub: ClubAgg | null;
   fatigue: FatiguePoint[];
+  verdict: SwingVerdict;
 }) {
   const t = useT(L);
+  const { lang } = useLang();
   const d = distanceUnitLabel(session.distance_unit);
   const cell = "px-3 py-1.5 text-sm whitespace-nowrap tnum";
+  const notes = [...verdict.issues, ...(verdict.strength ? [verdict.strength] : [])];
 
   return (
     <div className="flex flex-col gap-6">
@@ -74,6 +105,31 @@ export function SessionDetailClient({
           <DeleteSessionButton id={session.id} />
         </div>
       </div>
+
+      {/* Swing verdict — the hero: what your swing was doing this session. */}
+      <Card className="border-accent/30 p-5">
+        <SectionTitle sub={t("swingSub")}>{t("swingTitle")}</SectionTitle>
+        {verdict.n < 5 ? (
+          <p className="text-sm text-ink-muted">{t("swingThin")}</p>
+        ) : notes.length === 0 ? (
+          <p className="text-sm text-good">{t("swingClean")}</p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {notes.map((note, i) => (
+              <li key={i} className="flex gap-2.5 text-sm">
+                <span
+                  className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${TONE_DOT[note.tone]}`}
+                  aria-hidden
+                />
+                <span className="text-ink">{lang === "th" ? note.th : note.text}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-3 text-[11px] text-ink-muted">
+          {t("swingFrom")} {fmt(verdict.n)} {t("shotsLower")}
+        </p>
+      </Card>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <StatCard label={t("shots")} value={fmt(kpis.shots)} />
